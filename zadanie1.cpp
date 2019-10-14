@@ -7,65 +7,69 @@
 #include <climits>
 #include <regex>
 
+using namespace std;
 
-//na set
-// vector na mape
-// komentarze
-// zmienne w srodku
-// long longi na const
-// czekaj na false
+// TODO:komentarze
+// TODO:test
 
-std::unordered_map<std::string, long long> stop_name_to_stop_number;
-std::unordered_map<long long, bool> present_tram_number;
-std::vector<std::unordered_map<long long, int>> schedule_for_stops;
+//unordered_map<long long, unordered_map<string, int>> &schedule_for_trams;
+//
+//vector<string> ticket_name;
+//vector<double> ticket_price;
+//vector<long long> ticket_time;
+//
+//vector<long long> cost(mx_time, INF);
+//vector<vector<long long>> proposed_tickets(mx_time + 4);
 
-bool check_if_tram_at_stop(long long &tram_number, std::string &stop) {
-    if (present_tram_number.count(tram_number) == 0)
+const int mx_time = 950;
+const long long INF = numeric_limits<double>::infinity();
+
+bool is_tram_present(const long long tram_number,
+                     unordered_map<long long, unordered_map<string, int>> &schedule_for_trams) {
+    if (schedule_for_trams.find(tram_number) == schedule_for_trams.end())
+        return false;
+    return true;
+}
+
+bool check_if_tram_at_stop(const long long tram_number, string &stop,
+                           unordered_map<long long, unordered_map<string, int>> &schedule_for_trams) {
+    if (!is_tram_present(tram_number, schedule_for_trams))
         return false;
 
-    auto stop_number = stop_name_to_stop_number[stop];
-    auto schedule = schedule_for_stops[stop_number];
-    if (schedule.count(tram_number) == 0)
+    auto schedule = schedule_for_trams[tram_number];
+    if (schedule.count(stop) == 0)
         return false;
 
     return true;
 }
 
-void add_tram(long long &tram_number, std::vector<int> &schedule_time,
-              std::vector<std::string> &tram_stops) {
-    present_tram_number[tram_number] = true;
+bool add_tram(const long long tram_number, vector<int> &schedule_time,
+              vector <string> &tram_stops,
+              unordered_map<long long, unordered_map<string, int>> &schedule_for_trams) {
 
-    for (long long i = 0; i < tram_stops.size(); ++i) {
+    // ull?
+    for (unsigned long long i = 0; i < tram_stops.size(); ++i) {
         auto stop_name = tram_stops[i];
         auto stop_time = schedule_time[i];
-        std::string destination = "*";
+        string destination = "*";
         if (i + 1 < tram_stops.size())
             destination = tram_stops[i + 1];
 
-        long long stop_number = 0;
-        if (stop_name_to_stop_number.count(stop_name) == 0) {
-            stop_number = stop_name_to_stop_number.size();
-            stop_name_to_stop_number[stop_name] = stop_number;
-            schedule_for_stops.push_back({});
-        }
+        bool stop_repeated = check_if_tram_at_stop(tram_number, stop_name,
+                                                   schedule_for_trams);
+        if (stop_repeated)
+            return false;
 
-        stop_number = stop_name_to_stop_number[stop_name];
-        schedule_for_stops[stop_number][tram_number] = stop_time;
+        schedule_for_trams[tram_number][stop_name] = stop_time;
     }
+    return true;
 }
 
-std::vector<std::string> ticket_name;
-std::vector<double> ticket_price;
-std::vector<long long> ticket_time;
-
-const int mx_time = 950;
-const long long INF = std::numeric_limits<double>::infinity();
-std::vector<long long> cost(mx_time, INF);
-std::vector<long long> final_cost;
-std::vector<std::vector<long long>> proposed_tickets(mx_time + 4);
-std::vector<std::vector<long long>> final_proposed_tickets(mx_time + 4);
-
-void add_ticket(std::string &name, long long &price, long long &minutes) {
+void add_ticket(string &name, const long long price, long long minutes,
+                vector <string> &ticket_name,
+                vector<long long> &ticket_price, vector<long long> &ticket_time,
+                vector<long long> cost,
+                vector <vector<string>> proposed_tickets) {
     if (minutes > mx_time)
         minutes = mx_time;
     ticket_name.push_back(name);
@@ -74,53 +78,44 @@ void add_ticket(std::string &name, long long &price, long long &minutes) {
 
     cost[0] = 0;
 
-    long long ticket_nr = ticket_name.size() - 1;
     for (long long i = mx_time; i >= minutes; --i) {
         if (proposed_tickets[i - minutes].size() < 3) {
             if (cost[i] > cost[i - minutes] + price) {
                 cost[i] = cost[i - minutes] + price;
                 proposed_tickets[i] = proposed_tickets[i - minutes];
-                proposed_tickets[i].push_back(ticket_nr);
+                proposed_tickets[i].push_back(name);
             } else if (cost[i] == cost[i - minutes] + price
                        && proposed_tickets[i - minutes].size() + 1 <
                           proposed_tickets[i].size()) {
 
                 proposed_tickets[i] = proposed_tickets[i - minutes];
-                proposed_tickets[i].push_back(ticket_nr);
+                proposed_tickets[i].push_back(name);
             }
 
         }
     }
-
-    for (int i = mx_time - 1; i > 0; --i) {
-        if (final_cost[i] < final_cost[i + 1]) {
-            final_cost[i] = final_cost[i + 1];
-            final_proposed_tickets[i] = final_proposed_tickets[i + 1];
-        }
-    }
 }
 
-bool ask_for_tickets(std::vector<std::string> &stops,
-                     std::vector<long long> &trams_numbers) {
+bool ask_for_tickets(vector <string> &stops, vector<long long> &trams_numbers,
+                     vector <vector<string>> proposed_tickets,
+                     unordered_map<long long, unordered_map<string, int>> &schedule_for_trams) {
     long long n = trams_numbers.size();
     trams_numbers.push_back(trams_numbers[n - 1]);
     auto previous_tram = trams_numbers[0];
-    auto first_stop_number = stop_name_to_stop_number[stops[0]];
-    auto previous_departure_time = schedule_for_stops[first_stop_number][trams_numbers[0]];
+    auto first_stop_name = stops[0];
+    auto previous_departure_time = schedule_for_trams[trams_numbers[0]][first_stop_name];
+    string stop_to_wait = "";
+
     for (long long i = 0; i <= n; ++i) {
         auto stop_name = stops[i];
-        auto stop_number = stop_name_to_stop_number[stop_name];
-        auto arrival_time = schedule_for_stops[stop_number][previous_tram];
-        auto departure_time = schedule_for_stops[stop_number][trams_numbers[i]];
+        auto arrival_time = schedule_for_trams[previous_tram][stop_name];
+        auto departure_time = schedule_for_trams[trams_numbers[i]][stop_name];
 
         if (arrival_time < previous_departure_time)
             return false;
 
-        // wypisac to tutaj, czy poczekac, czy nie rzuci false?
-        if (arrival_time < departure_time) {
-            std::cout << ":-( " << stop_name << "\n";
-            return true;
-        }
+        if (arrival_time < departure_time && stop_to_wait != "")
+            stop_to_wait = stop_name;
 
         if (arrival_time > departure_time)
             return false;
@@ -129,39 +124,43 @@ bool ask_for_tickets(std::vector<std::string> &stops,
         previous_departure_time = departure_time;
     }
 
-    auto last_stop_number = stop_name_to_stop_number[stops[n]];
-    auto first_time = schedule_for_stops[first_stop_number][trams_numbers[0]];
-    auto last_time = schedule_for_stops[last_stop_number][trams_numbers[n]];
+    if (stop_to_wait != "") {
+        cout << ":-( " << stop_to_wait << "\n";
+        return true;
+    }
+
+    auto last_stop_name = stops[n];
+    auto first_time = schedule_for_trams[trams_numbers[0]][first_stop_name];
+    auto last_time = schedule_for_trams[trams_numbers[n]][last_stop_name];
     auto summary_time = last_time - first_time + 1;
 
-    std::vector<long long> final_tickets = proposed_tickets[summary_time];
-
     bool semicolon = false;
-    std::cout << "!";
-    for (auto id: final_tickets) {
+    cout << "!";
+    for (auto ticket: proposed_tickets[summary_time]) {
         if (semicolon)
-            std::cout << ";";
+            cout << ";";
         else
             semicolon = true;
-        std::cout << " " << ticket_name[id];
+        cout << " " << ticket;
     }
-    std::cout << "\n";
+    cout << "\n";
 
     return true;
 }
 
 //int main() {
+//
 //    long long x = 1;
-//    std::string p = "b";
+//    string p = "b";
 //
-//    std::vector<int> schedule_time = {1, 2, 3};
-//    std::vector<std::string> tram_stops = {"a", "b", "c"};
+//    vector<int> schedule_time = {1, 2, 3};
+//    vector<string> tram_stops = {"a", "b", "c"};
 //    add_tram(x, schedule_time, tram_stops);
-////std::cout << (int)check_if_tram_at_stop(x, p);
+////cout << (int)check_if_tram_at_stop(x, p);
 //
-//    std::vector<std::string> stops = {"a", "c", "b"};
-//    std::vector<long long> trams_numbers = {1, 1};
-//    std::cout << ask_for_tickets(stops, trams_numbers);
+//    vector<string> stops = {"a", "c", "b"};
+//    vector<long long> trams_numbers = {1, 1};
+//    cout << ask_for_tickets(stops, trams_numbers);
 //}
 
 const int lower_time_limit = 355;
@@ -170,17 +169,17 @@ const int upper_time_limit = 1281;
 const int minutes_in_hour = 60;
 const int pennys_in_price_integral = 100;
 
-const std::regex assistant_regex("[0-9]+|[a-zA-Z_^]+");
-const std::regex question_regex("[?]\\s[a-zA-Z_^]+(?:\\s[0-9]+\\s[a-zA-Z_^]+)+");
-const std::regex course_regex("[0-9]+(?:\\s[1-9]?[0-9]:[0-9]{2}\\s[a-zA-Z_^]+)+");
-const std::regex ticket_regex(
+const regex assistant_regex("[0-9]+|[a-zA-Z_^]+");
+const regex question_regex("[?]\\s[a-zA-Z_^]+(?:\\s[0-9]+\\s[a-zA-Z_^]+)+");
+const regex course_regex("[0-9]+(?:\\s[1-9]?[0-9]:[0-9]{2}\\s[a-zA-Z_^]+)+");
+const regex ticket_regex(
         "([a-zA-Z]+(?:\\s[a-zA-Z]+)*)\\s([0-9]+)[.]([0-9]{2})\\s([0-9]+)");
 
-void print_error(std::string line, int line_number) {
-    std::cerr << "Error in line " << line_number << ": " << line << "\n";
+void print_error(string line, int line_number) {
+    cerr << "Error in line " << line_number << ": " << line << "\n";
 }
 
-int number_of_whitespaces(std::string line) {
+int number_of_whitespaces(string line) {
     int counter = 0;
 
     for (size_t i = 0; i < line.size(); i++) {
@@ -200,22 +199,22 @@ long long price_to_pennys(long price_integral, int price_fractional) {
     return price_integral * pennys_in_price_integral + price_fractional;
 }
 
-void question_about_ticket(std::string line, int line_number,
-                           std::vector<std::string> &stops,
-                           std::vector<long long> &trams_numbers) {
+void question_about_ticket(string line, int line_number,
+                           vector<string> &stops,
+                           vector<long long> &trams_numbers) {
     bool error = false;
     int number_of_stops = 0;
 
     if (regex_match(line, question_regex)) {
-        std::sregex_iterator i = std::sregex_iterator(line.begin(),
+        sregex_iterator i = sregex_iterator(line.begin(),
                                             line.end(), assistant_regex);
         number_of_stops = (number_of_whitespaces(line) + 1) / 2;
-        stops = std::vector<std::string>(number_of_stops);
-        trams_numbers = std::vector<long long>(number_of_stops - 1);
+        stops = vector<string>(number_of_stops);
+        trams_numbers = vector<long long>(number_of_stops - 1);
         int j = 0;
         stops.at(j) = (*i).str();
         i++;
-        while ((i != std::sregex_iterator()) && !error) {
+        while ((i != sregex_iterator()) && !error) {
             trams_numbers.at(j) = stoll((*i).str());
             if (is_tram_number_correct(trams_numbers.at(j))) {
                 i++;
@@ -243,22 +242,22 @@ void question_about_ticket(std::string line, int line_number,
     }
 }
 
-void add_tram(std::string line, int line_number, long long &tram_number,
-              std::vector<std::string> &stops, std::vector<int> &times) {
+void add_tram(string line, int line_number, long long &tram_number,
+              vector<string> &stops, vector<int> &times) {
     bool error = false;
     int number_of_stops = 0;
 
     if (regex_match(line, course_regex)) {
-        std::sregex_iterator i = std::sregex_iterator(line.begin(),
+        sregex_iterator i = sregex_iterator(line.begin(),
                                             line.end(), assistant_regex);
         tram_number = stoll((*i).str());
         i++;
         if (is_tram_number_correct(tram_number)) {
             number_of_stops = number_of_whitespaces(line) / 2;
-            stops = std::vector<std::string>(number_of_stops);
-            times = std::vector<int>(number_of_stops);
+            stops = vector<string>(number_of_stops);
+            times = vector<int>(number_of_stops);
             int j = 0, current_time = 0, previous_time = 0, hour = 0;
-            while ((i != std::sregex_iterator()) && !error) {
+            while ((i != sregex_iterator()) && !error) {
                 hour = stoi((*i).str());
                 i++;
                 current_time = time_to_minutes(hour, stoi((*i).str()));
@@ -289,12 +288,12 @@ void add_tram(std::string line, int line_number, long long &tram_number,
     }
 }
 
-void add_ticket(std::string line, int line_number,
-                std::string &ticket_name, long long &price, long long &validity) {
-    std::smatch result;
+void add_ticket(string line, int line_number,
+                string &ticket_name, long long &price, long long &validity) {
+    smatch result;
 
     if (regex_match(line, result, ticket_regex)) {
-        std::smatch::iterator i = result.begin();
+        smatch::iterator i = result.begin();
         long price_integral;
         i++;
         ticket_name = *i;
@@ -309,15 +308,15 @@ void add_ticket(std::string line, int line_number,
     }
 }
 
-void choose_function(std::string line, int line_number) {
+void choose_function(string line, int line_number) {
     char first_sign = line[0];
-    std::string ticket_name = "";
+    string ticket_name = "";
     long long price = 0;
     long long validity = 0;
     long long tram_number = 0;
-    std::vector<std::string> stops;
-    std::vector<long long> trams_numbers;
-    std::vector<int> times;
+    vector<string> stops;
+    vector<long long> trams_numbers;
+    vector<int> times;
 
     if (first_sign == '?') {
         question_about_ticket(line, line_number, stops, trams_numbers);
@@ -332,13 +331,15 @@ void choose_function(std::string line, int line_number) {
 }
 
 int main() {
-    std::string line;
-    int line_number = 0;
+//    string line;
+//    int line_number = 0;
+//
+//    while (!getline(cin, line).eof()) {
+//        line_number++;
+//        if (!line.empty()) {
+//            choose_function(line, line_number);
+//        }
+//    }
 
-    while (!getline(std::cin, line).eof()) {
-        line_number++;
-        if (!line.empty()) {
-            choose_function(line, line_number);
-        }
-    }
+
 }
