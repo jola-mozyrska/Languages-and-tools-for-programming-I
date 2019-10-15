@@ -36,7 +36,7 @@ bool check_if_tram_at_stop(const long long tram_number, string &stop,
 //  adds tram trace to schedule
 //  returns false if there is a loop in given tram trace
 bool add_tram(const long long tram_number, vector<int> &schedule_time,
-              vector<string> &tram_stops,
+              vector <string> &tram_stops,
               unordered_map<long long, unordered_map<string, int>> &schedule_for_trams) {
 
     for (auto i = 0; i < tram_stops.size(); ++i) {
@@ -55,10 +55,10 @@ bool add_tram(const long long tram_number, vector<int> &schedule_time,
 
 //  adds new avilable ticket and updates optimal cost for given time
 void add_ticket(string &name, const long long price, long long minutes,
-                vector<string> &ticket_name,
+                vector <string> &ticket_name,
                 vector<long long> &ticket_price, vector<long long> &ticket_time,
                 vector<long long> &cost,
-                vector<vector<string>> &proposed_tickets) {
+                vector <vector<string>> &proposed_tickets) {
     //  time exceeds minutes in a day
     if (minutes > mx_time)
         minutes = mx_time;
@@ -103,8 +103,8 @@ void add_ticket(string &name, const long long price, long long minutes,
 
 //  Prints names of best maximum 3 tickets
 //  returns true if nothing have to be printed on stderr
-bool ask_for_tickets(vector<string> &stops, vector<long long> &trams_numbers,
-                     vector<vector<string>> &proposed_tickets,
+bool ask_for_tickets(vector <string> &stops, vector<long long> &trams_numbers,
+                     vector <vector<string>> &proposed_tickets,
                      unordered_map<long long, unordered_map<string, int>> &schedule_for_trams,
                      long long &number_of_tickets) {
     long long n = trams_numbers.size();
@@ -168,12 +168,12 @@ bool ask_for_tickets(vector<string> &stops, vector<long long> &trams_numbers,
 void tests() {
     unordered_map<long long, unordered_map<string, int>> schedule_for_trams;
 
-    vector<string> ticket_name;
+    vector <string> ticket_name;
     vector<long long> ticket_price;
     vector<long long> ticket_time;
 
     vector<long long> cost(mx_time + 2, INF);
-    vector<vector<string>> proposed_tickets(mx_time + 2);
+    vector <vector<string>> proposed_tickets(mx_time + 2);
 
     long long number_of_tickets = 0;
 
@@ -188,7 +188,7 @@ void tests() {
 //    ? Banacha 1 Winnicka
 //    ? Banacha 1 Winnicka 4 Banacha
 
-    vector<string> names = {"Banacha", "Pasteura", "Winnicka"};
+    vector <string> names = {"Banacha", "Pasteura", "Winnicka"};
     vector<int> hours = {6 * 60, 7 * 60, 8 * 60};
     add_tram((long long) 1, hours, names, schedule_for_trams);
     names = {"Winnicka", "Banacha", "Pasteura"};
