@@ -72,7 +72,7 @@ void add_ticket(string &name, const long long price, long long minutes,
                 vector <string> &ticket_name,
                 vector<long long> &ticket_price, vector<long long> &ticket_time,
                 vector<long long> &cost,
-                vector <vector<string>> &proposed_tickets) {
+                vector <vector<string> > &proposed_tickets) {
     //  time exceeds minutes in a day
     if (minutes > mx_time)
         minutes = mx_time;
@@ -118,7 +118,7 @@ void add_ticket(string &name, const long long price, long long minutes,
 //  Prints names of best maximum 3 tickets
 //  returns true if nothing have to be printed on stderr
 bool ask_for_tickets(vector <string> &stops, vector<long long> &trams_numbers,
-                     vector <vector<string>> &proposed_tickets,
+                     vector <vector<string> > &proposed_tickets,
                      unordered_map<long long, unordered_map<string, int> > &schedule_for_trams,
                      long long &number_of_tickets) {
     long long n = trams_numbers.size();
@@ -206,7 +206,7 @@ long long price_to_pennys(long price_integral, int price_fractional) {
 void question_about_ticket_command(string line, int line_number,
                                    vector <string> &stops,
                                    vector<long long> &trams_numbers,
-                                   vector <vector<string>> &proposed_tickets,
+                                   vector <vector<string> > &proposed_tickets,
                                    long long &number_of_tickets,
                                    unordered_map<long long, unordered_map<string, int> > &schedule_for_trams) {
     bool error = false;
@@ -236,8 +236,8 @@ void question_about_ticket_command(string line, int line_number,
             error = true;
         }
     }
-    if (!ask_for_tickets(stops, trams_numbers, proposed_tickets,
-                         schedule_for_trams, number_of_tickets)) {
+    if (!error && !ask_for_tickets(stops, trams_numbers, proposed_tickets,
+                                   schedule_for_trams, number_of_tickets)) {
         error = true;
     }
 
@@ -247,7 +247,7 @@ void question_about_ticket_command(string line, int line_number,
     }
 }
 
-void add_tram_command(string line, int line_number, long long &tram_number,
+void add_tram_command(string line, int line_number, long long tram_number,
                       vector <string> &stops, vector<int> &times,
                       unordered_map<long long, unordered_map<string, int> > &schedule_for_trams) {
     bool error = false;
@@ -318,7 +318,7 @@ int main() {
     vector <string> stops, ticket_name;
     vector<long long> trams_numbers, ticket_price, ticket_time;
     vector<long long> cost(mx_time + 2, INF);
-    vector <vector<string>> proposed_tickets(mx_time + 2);
+    vector <vector<string> > proposed_tickets(mx_time + 2);
     vector<int> times;
 
     while (!getline(cin, line).eof()) {
