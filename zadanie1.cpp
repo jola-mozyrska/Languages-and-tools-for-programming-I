@@ -55,14 +55,15 @@ bool add_tram(const long long tram_number, vector<int> &schedule_time,
               unordered_map<long long, unordered_map<string, int> > &schedule_for_trams) {
 
     for (size_t i = 0; i < tram_stops.size(); ++i) {
-        auto stop_name = tram_stops[i];
-        auto stop_time = schedule_time[i];
-
         bool stop_repeated = check_if_tram_at_stop(tram_number, stop_name,
                                                    schedule_for_trams);
         if (stop_repeated)
             return false;
+    }
 
+    for (size_t i = 0; i < tram_stops.size(); ++i) {
+        auto stop_name = tram_stops[i];
+        auto stop_time = schedule_time[i];
         schedule_for_trams[tram_number][stop_name] = stop_time;
     }
     return true;
@@ -90,7 +91,6 @@ bool add_ticket(string &name, const long long price, long long minutes,
     ticket_price.push_back(price);
     ticket_time.push_back(minutes);
 
-    cost[0] = 0;
     for (int multiple_ticket = 1; multiple_ticket <= 3; ++multiple_ticket) {
         for (long long i = mx_time; i >= minutes; --i) {
             //  greater time has better tickets
@@ -362,6 +362,8 @@ int main() {
     vector<int> times;
     //  container remembering tickets' names that already occurred
     unordered_set <string> present_ticket;
+
+    cost[0] = 0;
 
     while (!getline(cin, line).eof()) {
         line_number++;
