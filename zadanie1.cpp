@@ -30,7 +30,7 @@ const regex ticket_regex(
 //  checks if the tram number was already added
 bool is_tram_present(const long long tram_number,
                      unordered_map<long long, unordered_map<string, int> > &schedule_for_trams) {
-    if (schedule_for_trams.find(tram_number) == schedule_for_trams.end())
+    if (schedule_for_trams.count(tram_number) == 0)
         return false;
     return true;
 }
@@ -41,8 +41,7 @@ bool check_if_tram_at_stop(const long long tram_number, string &stop,
     if (!is_tram_present(tram_number, schedule_for_trams))
         return false;
 
-    auto schedule = schedule_for_trams[tram_number];
-    if (schedule.count(stop) == 0)
+    if (schedule_for_trams[tram_number].count(stop) == 0)
         return false;
 
     return true;
@@ -54,19 +53,28 @@ bool add_tram(const long long tram_number, vector<int> &schedule_time,
               vector <string> &tram_stops,
               unordered_map<long long, unordered_map<string, int> > &schedule_for_trams) {
 
-    for (size_t i = 0; i < tram_stops.size(); ++i) {
-        auto stop_name = tram_stops[i];
-        bool stop_repeated = check_if_tram_at_stop(tram_number, stop_name,
-                                                   schedule_for_trams);
-        if (stop_repeated)
-            return false;
-    }
-
+    bool stop_repeated = false;
     for (size_t i = 0; i < tram_stops.size(); ++i) {
         auto stop_name = tram_stops[i];
         auto stop_time = schedule_time[i];
+
+        if (check_if_tram_at_stop(tram_number, stop_name, schedule_for_trams))
+            stop_repeated = true;
+
         schedule_for_trams[tram_number][stop_name] = stop_time;
     }
+
+    if (stop_repeated) {
+        for (size_t i = 0; i < tram_stops.size(); ++i) {
+            auto stop_name = tram_stops[i];
+            schedule_for_trams[tram_number].erase(stop_name);
+            if (schedule_for_trams[tram_number].empty())
+                schedule_for_trams.erase(tram_number);
+        }
+
+        return false;
+    }
+
     return true;
 }
 
