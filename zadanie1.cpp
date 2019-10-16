@@ -75,7 +75,7 @@ bool add_ticket(string &name, const long long price, long long minutes,
                 vector <string> &ticket_name,
                 vector<long long> &ticket_price, vector<long long> &ticket_time,
                 vector<long long> &cost,
-                vector <vector<unsigned long long> > &proposed_tickets,
+                vector <vector<unsigned long long>> &proposed_tickets,
                 unordered_set <string> &present_ticket) {
 
     if (present_ticket.find(name) != present_ticket.end())
@@ -143,7 +143,7 @@ bool add_ticket(string &name, const long long price, long long minutes,
 //  prints names of best maximum 3 tickets
 //  returns true if nothing have to be printed on stderr
 bool ask_for_tickets(vector <string> &stops, vector<long long> &trams_numbers,
-                     vector <vector<unsigned long long> > &proposed_tickets,
+                     vector <vector<unsigned long long>> &proposed_tickets,
                      unordered_map<long long, unordered_map<string, int> > &schedule_for_trams,
                      long long &number_of_tickets,
                      vector <string> &ticket_name) {
@@ -239,7 +239,7 @@ long long price_to_pennys(long price_integral, int price_fractional) {
 void question_about_ticket_command(string line, int line_number,
                                    vector <string> &stops,
                                    vector<long long> &trams_numbers,
-                                   vector <vector<unsigned long long> > &proposed_tickets,
+                                   vector <vector<unsigned long long>> &proposed_tickets,
                                    long long &number_of_tickets,
                                    unordered_map<long long, unordered_map<string, int> > &schedule_for_trams,
                                    vector <string> &ticket_name) {
@@ -359,7 +359,7 @@ int main() {
     vector<long long> trams_numbers, ticket_price, ticket_time;
     //  container holding cost for given time
     vector<long long> cost(mx_time + 2, INF);
-    vector <vector<unsigned long long> > proposed_tickets(mx_time + 2);
+    vector <vector<unsigned long long>> proposed_tickets(mx_time + 2);
     vector<int> times;
     //  container remembering tickets' names that already occurred
     unordered_set <string> present_ticket;
@@ -384,8 +384,8 @@ int main() {
                                 ticket_price,
                                 ticket_time, cost, proposed_tickets,
                                 present_ticket)) {
-                        print_error(line, line_number);
-                    }
+                    print_error(line, line_number);
+                }
             } else {
                 print_error(line, line_number);
             }
