@@ -55,6 +55,7 @@ bool add_tram(const long long tram_number, vector<int> &schedule_time,
               unordered_map<long long, unordered_map<string, int> > &schedule_for_trams) {
 
     for (size_t i = 0; i < tram_stops.size(); ++i) {
+        auto stop_name = tram_stops[i];
         bool stop_repeated = check_if_tram_at_stop(tram_number, stop_name,
                                                    schedule_for_trams);
         if (stop_repeated)
