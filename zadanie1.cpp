@@ -3,6 +3,7 @@
 #include <iostream>
 #include <tuple>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 #include <climits>
 #include <regex>
@@ -67,15 +68,24 @@ bool add_tram(const long long tram_number, vector<int> &schedule_time,
     return true;
 }
 
-//  adds new avilable ticket and updates optimal cost for given time
-void add_ticket(string &name, const long long price, long long minutes,
+//  adds new available ticket and updates optimal cost for given time
+bool add_ticket(string &name, const long long price, long long minutes,
                 vector <string> &ticket_name,
                 vector<long long> &ticket_price, vector<long long> &ticket_time,
                 vector<long long> &cost,
-                vector <vector<string> > &proposed_tickets) {
-    //  time exceeds minutes in a day
+                vector <vector<unsigned long long>> &proposed_tickets,
+                unordered_set <string> &present_ticket) {
+
+    if (present_ticket.find(name) != present_ticket.end())
+        return false;
+
+    //  time exceeds maximum minutes for a day
     if (minutes > mx_time)
         minutes = mx_time;
+
+    unsigned long long ticket_id = ticket_name.size();
+
+    present_ticket.insert(name);
     ticket_name.push_back(name);
     ticket_price.push_back(price);
     ticket_time.push_back(minutes);
@@ -102,25 +112,28 @@ void add_ticket(string &name, const long long price, long long minutes,
                 if (cost[i] > cost[i - minutes] + price) {
                     cost[i] = cost[i - minutes] + price;
                     proposed_tickets[i] = proposed_tickets[i - minutes];
-                    proposed_tickets[i].push_back(name);
+                    proposed_tickets[i].push_back(ticket_id);
                 } else if (cost[i] == cost[i - minutes] + price
                            && proposed_tickets[i - minutes].size() + 1 <
                               proposed_tickets[i].size()) {
 
                     proposed_tickets[i] = proposed_tickets[i - minutes];
-                    proposed_tickets[i].push_back(name);
+                    proposed_tickets[i].push_back(ticket_id);
                 }
             }
         }
     }
+
+    return true;
 }
 
 //  Prints names of best maximum 3 tickets
 //  returns true if nothing have to be printed on stderr
 bool ask_for_tickets(vector <string> &stops, vector<long long> &trams_numbers,
-                     vector <vector<string> > &proposed_tickets,
+                     vector <vector<unsigned long long>> &proposed_tickets,
                      unordered_map<long long, unordered_map<string, int> > &schedule_for_trams,
-                     long long &number_of_tickets) {
+                     long long &number_of_tickets,
+                     vector <string> &ticket_name) {
     long long n = trams_numbers.size();
     trams_numbers.push_back(trams_numbers[n - 1]);
     auto previous_tram = trams_numbers[0];
@@ -172,7 +185,7 @@ bool ask_for_tickets(vector <string> &stops, vector<long long> &trams_numbers,
             cout << ";";
         else
             semicolon = true;
-        cout << " " << ticket;
+        cout << " " << ticket_name[ticket];
     }
     cout << endl;
 
@@ -206,9 +219,10 @@ long long price_to_pennys(long price_integral, int price_fractional) {
 void question_about_ticket_command(string line, int line_number,
                                    vector <string> &stops,
                                    vector<long long> &trams_numbers,
-                                   vector <vector<string> > &proposed_tickets,
+                                   vector <vector<unsigned long long>> &proposed_tickets,
                                    long long &number_of_tickets,
-                                   unordered_map<long long, unordered_map<string, int> > &schedule_for_trams) {
+                                   unordered_map<long long, unordered_map<string, int> > &schedule_for_trams,
+                                   vector <string> &ticket_name) {
     bool error = false;
     int number_of_stops = 0;
     sregex_iterator i = sregex_iterator(line.begin(),
@@ -237,7 +251,8 @@ void question_about_ticket_command(string line, int line_number,
         }
     }
     if (!error && !ask_for_tickets(stops, trams_numbers, proposed_tickets,
-                                   schedule_for_trams, number_of_tickets)) {
+                                   schedule_for_trams, number_of_tickets,
+                                   ticket_name)) {
         error = true;
     }
 
@@ -318,8 +333,9 @@ int main() {
     vector <string> stops, ticket_name;
     vector<long long> trams_numbers, ticket_price, ticket_time;
     vector<long long> cost(mx_time + 2, INF);
-    vector <vector<string> > proposed_tickets(mx_time + 2);
+    vector <vector<unsigned long long>> proposed_tickets(mx_time + 2);
     vector<int> times;
+    unordered_set <string> present_ticket;
 
     while (!getline(cin, line).eof()) {
         line_number++;
@@ -328,14 +344,18 @@ int main() {
                 question_about_ticket_command(line, line_number, stops,
                                               trams_numbers, proposed_tickets,
                                               number_of_tickets,
-                                              schedule_for_trams);
+                                              schedule_for_trams,
+                                              ticket_name);
             } else if (regex_match(line, tram_regex)) {
                 add_tram_command(line, line_number, tram_number, stops, times,
                                  schedule_for_trams);
             } else if (regex_match(line, result, ticket_regex)) {
                 add_ticket_command(result, name, price, validity);
-                add_ticket(name, price, validity, ticket_name, ticket_price,
-                           ticket_time, cost, proposed_tickets);
+                if (!add_ticket(name, price, validity, ticket_name,
+                                ticket_price,
+                                ticket_time, cost, proposed_tickets,
+                                present_ticket))
+                    print_error(line, line_number);
             } else {
                 print_error(line, line_number);
             }
