@@ -124,6 +124,18 @@ bool add_ticket(string &name, const long long price, long long minutes,
         }
     }
 
+    for (long long i = minutes; i >= 1; --i) {
+        if (cost[i] > cost[i + 1]) {
+            cost[i] = cost[i + 1];
+            proposed_tickets[i] = proposed_tickets[i + 1];
+        } else if (cost[i] == cost[i + 1] &&
+                   proposed_tickets[i].size() >
+                   proposed_tickets[i + 1].size()) {
+            cost[i] = cost[i + 1];
+            proposed_tickets[i] = proposed_tickets[i + 1];
+        }
+    }
+
     return true;
 }
 
@@ -339,12 +351,16 @@ int main() {
     string line, name = "";
     int line_number = 0;
     long long number_of_tickets = 0, price = -1, validity = -1, tram_number = -1;
+    //  container mapping tram number to map with stop name as key
     unordered_map<long long, unordered_map<string, int> > schedule_for_trams;
     vector <string> stops, ticket_name;
+    //  containers for tickets' data
     vector<long long> trams_numbers, ticket_price, ticket_time;
+    //  container holding cost for given time
     vector<long long> cost(mx_time + 2, INF);
     vector <vector<unsigned long long> > proposed_tickets(mx_time + 2);
     vector<int> times;
+    //  container remembering tickets' names that already occurred
     unordered_set <string> present_ticket;
 
     while (!getline(cin, line).eof()) {
