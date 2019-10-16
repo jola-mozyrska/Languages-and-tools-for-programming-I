@@ -73,7 +73,7 @@ bool add_ticket(string &name, const long long price, long long minutes,
                 vector <string> &ticket_name,
                 vector<long long> &ticket_price, vector<long long> &ticket_time,
                 vector<long long> &cost,
-                vector <vector<unsigned long long>> &proposed_tickets,
+                vector <vector<unsigned long long> > &proposed_tickets,
                 unordered_set <string> &present_ticket) {
 
     if (present_ticket.find(name) != present_ticket.end())
@@ -127,10 +127,10 @@ bool add_ticket(string &name, const long long price, long long minutes,
     return true;
 }
 
-//  Prints names of best maximum 3 tickets
+//  prints names of best maximum 3 tickets
 //  returns true if nothing have to be printed on stderr
 bool ask_for_tickets(vector <string> &stops, vector<long long> &trams_numbers,
-                     vector <vector<unsigned long long>> &proposed_tickets,
+                     vector <vector<unsigned long long> > &proposed_tickets,
                      unordered_map<long long, unordered_map<string, int> > &schedule_for_trams,
                      long long &number_of_tickets,
                      vector <string> &ticket_name) {
@@ -192,10 +192,12 @@ bool ask_for_tickets(vector <string> &stops, vector<long long> &trams_numbers,
     return true;
 }
 
+//  prints information about error on standard output stream for errors
 void print_error(string line, int line_number) {
     cerr << "Error in line " << line_number << ": " << line << endl;
 }
 
+//  counts number of whitespaces in given string
 int number_of_whitespaces(string line) {
     int counter = 0;
 
@@ -208,18 +210,23 @@ int number_of_whitespaces(string line) {
     return counter;
 }
 
+//  converts time to minutes
 int time_to_minutes(int hours, int minutes) {
     return hours * minutes_in_hour + minutes;
 }
 
+//  converts price to pennys
 long long price_to_pennys(long price_integral, int price_fractional) {
     return price_integral * pennys_in_price_integral + price_fractional;
 }
 
+//  extracts data from question about ticket command and checks for an error
+//  calls ask_for_tickets function if there was no error before
+//  if an error occurs, calls print_error function
 void question_about_ticket_command(string line, int line_number,
                                    vector <string> &stops,
                                    vector<long long> &trams_numbers,
-                                   vector <vector<unsigned long long>> &proposed_tickets,
+                                   vector <vector<unsigned long long> > &proposed_tickets,
                                    long long &number_of_tickets,
                                    unordered_map<long long, unordered_map<string, int> > &schedule_for_trams,
                                    vector <string> &ticket_name) {
@@ -262,6 +269,9 @@ void question_about_ticket_command(string line, int line_number,
     }
 }
 
+//  extracts data from add tram command and checks for an error
+//  calls add_tram function if there was no error before
+//  if an error occurs, calls print_error function
 void add_tram_command(string line, int line_number, long long tram_number,
                       vector <string> &stops, vector<int> &times,
                       unordered_map<long long, unordered_map<string, int> > &schedule_for_trams) {
@@ -300,16 +310,16 @@ void add_tram_command(string line, int line_number, long long tram_number,
         error = true;
     }
 
+    if (!error && !add_tram(tram_number, times, stops, schedule_for_trams)) {
+        error = true;
+    }
+
     if (error) {
         print_error(line, line_number);
-    } else {
-        if (!add_tram(tram_number, times, stops,
-                      schedule_for_trams)) {
-            print_error(line, line_number);
-        }
     }
 }
 
+//  extracts data from add ticket command
 void add_ticket_command(smatch result, string &ticket_name, long long &price,
                         long long &validity) {
     smatch::iterator i = result.begin();
@@ -333,7 +343,7 @@ int main() {
     vector <string> stops, ticket_name;
     vector<long long> trams_numbers, ticket_price, ticket_time;
     vector<long long> cost(mx_time + 2, INF);
-    vector <vector<unsigned long long>> proposed_tickets(mx_time + 2);
+    vector <vector<unsigned long long> > proposed_tickets(mx_time + 2);
     vector<int> times;
     unordered_set <string> present_ticket;
 
@@ -354,8 +364,9 @@ int main() {
                 if (!add_ticket(name, price, validity, ticket_name,
                                 ticket_price,
                                 ticket_time, cost, proposed_tickets,
-                                present_ticket))
-                    print_error(line, line_number);
+                                present_ticket)) {
+                        print_error(line, line_number);
+                    }
             } else {
                 print_error(line, line_number);
             }
