@@ -11,7 +11,7 @@
 using namespace std;
 
 const int MX_TIME = 950;
-const long long INF = numeric_limits<long long>::infinity();
+const long long INF = LLONG_MAX;
 
 const int LOWER_TIME_LIMIT = 355;
 const int UPPER_TIME_LIMIT = 1281;
