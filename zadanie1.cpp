@@ -16,6 +16,7 @@ const long long INF = numeric_limits<double>::infinity();
 const int LOWER_TIME_LIMIT = 355;
 const int UPPER_TIME_LIMIT = 1281;
 
+const int LAST_HOUR = 21;
 const int MINUTES_IN_HOUR = 60;
 const int PENNYS_IN_PRICE_INTEGRAL = 100;
 
@@ -47,7 +48,7 @@ bool check_if_tram_at_stop(const long long tram_number, string &stop,
 //  adds tram trace to schedule
 //  returns false if there is a loop in given tram trace
 bool add_tram(const long long tram_number, vector<int> &schedule_time,
-              vector <string> &tram_stops,
+              vector<string> &tram_stops,
               unordered_map<long long, unordered_map<string, int> > &schedule_for_trams) {
 
     bool stop_repeated = false;
@@ -79,10 +80,10 @@ bool add_tram(const long long tram_number, vector<int> &schedule_time,
 bool add_ticket(string &name, const long long price, long long minutes,
                 vector <string> &ticket_name,
                 vector<long long> &ticket_price, vector<long long> &ticket_time,
-                vector<vector<long long>> &cost,
-                vector <vector <vector <unsigned long long>>> &proposed_tickets,
+                vector<vector<long long> > &cost,
+                vector <vector <vector <unsigned long long> > > &proposed_tickets,
                 unordered_set <string> &present_ticket,
-                vector <vector<unsigned long long>> &final_tickets) {
+                vector <vector<unsigned long long> > &final_tickets) {
 
     if (present_ticket.find(name) != present_ticket.end())
         return false;
@@ -137,7 +138,7 @@ bool ask_for_tickets(vector <string> &stops, vector<long long> &trams_numbers,
                      unordered_map<long long, unordered_map<string, int> > &schedule_for_trams,
                      long long &number_of_tickets,
                      vector <string> &ticket_name,
-                     vector <vector<unsigned long long>> &final_tickets) {
+                     vector <vector<unsigned long long> > &final_tickets) {
     long long n = trams_numbers.size();
     trams_numbers.push_back(trams_numbers[n - 1]);
     auto previous_tram = trams_numbers[0];
@@ -158,14 +159,14 @@ bool ask_for_tickets(vector <string> &stops, vector<long long> &trams_numbers,
             return false;
 
         //  we have to wait for the tram
-        if (arrival_time < departure_time && stop_to_wait != "")
+        if (arrival_time < departure_time && stop_to_wait.empty())
             stop_to_wait = stop_name;
 
         previous_tram = trams_numbers[i];
         previous_departure_time = departure_time;
     }
 
-    if (stop_to_wait != "") {
+    if (!stop_to_wait.empty()) {
         cout << ":-( " << stop_to_wait << endl;
         return true;
     }
@@ -231,7 +232,7 @@ void question_about_ticket_command(string line, int line_number,
                                    long long &number_of_tickets,
                                    unordered_map<long long, unordered_map<string, int> > &schedule_for_trams,
                                    vector <string> &ticket_name,
-                                   vector <vector<unsigned long long>> final_tickets) {
+                                   vector <vector<unsigned long long> > final_tickets) {
     bool error = false;
     sregex_iterator i = sregex_iterator(line.begin(),
                                         line.end(), assistant_regex);
@@ -287,24 +288,30 @@ void add_tram_command(string line, int line_number,
         number_of_stops = number_of_whitespaces(line) / 2;
         stops = vector <string>(number_of_stops);
         times = vector <int>(number_of_stops);
-        int j = 0, current_time = 0, previous_time = 0, hour = 0;
+        int j = 0, current_time = 0, previous_time = 0, hours = 0, minutes = 0;
         while ((i != sregex_iterator()) && !error) {
-            hour = stoi((*i).str());
+            hours = stoi((*i).str());
             i++;
-            current_time = time_to_minutes(hour, stoi((*i).str()));
-            if ((current_time >= LOWER_TIME_LIMIT)
-                && (current_time <= UPPER_TIME_LIMIT)) {
-                i++;
-                times.at(j) = current_time;
-                stops.at(j) = (*i).str();
-                i++;
-                j++;
-                if (current_time <= previous_time) {
+            minutes = stoi((*i).str());
+            if (hours > LAST_HOUR || minutes >= MINUTES_IN_HOUR) {
+                error = true;
+            }
+            else {
+                current_time = time_to_minutes(hours, minutes);
+                if ((current_time >= LOWER_TIME_LIMIT)
+                    && (current_time <= UPPER_TIME_LIMIT)) {
+                    i++;
+                    times.at(j) = current_time;
+                    stops.at(j) = (*i).str();
+                    i++;
+                    j++;
+                    if (current_time <= previous_time) {
+                        error = true;
+                    }
+                    previous_time = current_time;
+                } else {
                     error = true;
                 }
-                previous_time = current_time;
-            } else {
-                error = true;
             }
         }
     } else {
@@ -345,17 +352,17 @@ int main() {
     vector <string> ticket_name;
     //  containers for tickets' data
     vector <long long> ticket_price, ticket_time;
-    vector <vector <unsigned long long>> final_tickets(MX_TIME + 3);
+    vector <vector <unsigned long long> > final_tickets(MX_TIME + 3);
     //  container remembering tickets' names that already occurred
     unordered_set <string> present_ticket;
 
-    vector <vector <vector <unsigned long long>>> proposed_tickets(4);
+    vector <vector <vector <unsigned long long> > > proposed_tickets(4);
     for (int i = 0; i < 4; ++i) {
         proposed_tickets[i].resize(MX_TIME + 3);
     }
 
     //  container holding cost for given time
-    vector <vector <long long>> cost(4);
+    vector <vector <long long> > cost(4);
     for (int i = 0; i < 4; ++i) {
         cost[i].resize(MX_TIME + 3);
         for(unsigned long long j = 0; j < proposed_tickets[i].size(); ++j)
