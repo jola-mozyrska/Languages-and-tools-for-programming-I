@@ -53,8 +53,8 @@ bool add_tram(const long long tram_number, vector<int> &schedule_time,
 
     bool stop_repeated = false;
     for (size_t i = 0; i < tram_stops.size(); ++i) {
-        auto stop_name = tram_stops[i];
-        auto stop_time = schedule_time[i];
+        string stop_name = tram_stops[i];
+        int stop_time = schedule_time[i];
 
         if (check_if_tram_at_stop(tram_number, stop_name, schedule_for_trams))
             stop_repeated = true;
@@ -64,7 +64,7 @@ bool add_tram(const long long tram_number, vector<int> &schedule_time,
 
     if (stop_repeated) {
         for (size_t i = 0; i < tram_stops.size(); ++i) {
-            auto stop_name = tram_stops[i];
+            string stop_name = tram_stops[i];
             schedule_for_trams[tram_number].erase(stop_name);
             if (schedule_for_trams[tram_number].empty())
                 schedule_for_trams.erase(tram_number);
@@ -141,15 +141,15 @@ bool ask_for_tickets(vector <string> &stops, vector<long long> &trams_numbers,
                      vector <vector<unsigned long long> > &final_tickets) {
     long long n = trams_numbers.size();
     trams_numbers.push_back(trams_numbers[n - 1]);
-    auto previous_tram = trams_numbers[0];
-    auto first_stop_name = stops[0];
-    auto previous_departure_time = schedule_for_trams[trams_numbers[0]][first_stop_name];
+    long long previous_tram = trams_numbers[0];
+    string first_stop_name = stops[0];
+    int previous_departure_time = schedule_for_trams[trams_numbers[0]][first_stop_name];
     string stop_to_wait = "";
 
     for (long long i = 0; i <= n; ++i) {
-        auto stop_name = stops[i];
-        auto arrival_time = schedule_for_trams[previous_tram][stop_name];
-        auto departure_time = schedule_for_trams[trams_numbers[i]][stop_name];
+        string stop_name = stops[i];
+        int arrival_time = schedule_for_trams[previous_tram][stop_name];
+        int departure_time = schedule_for_trams[trams_numbers[i]][stop_name];
 
         if (arrival_time < previous_departure_time)
             return false;
@@ -159,7 +159,7 @@ bool ask_for_tickets(vector <string> &stops, vector<long long> &trams_numbers,
             return false;
 
         //  we have to wait for the tram
-        if (arrival_time < departure_time && stop_to_wait.empty())
+        if ((arrival_time < departure_time) && stop_to_wait.empty())
             stop_to_wait = stop_name;
 
         previous_tram = trams_numbers[i];
@@ -171,10 +171,10 @@ bool ask_for_tickets(vector <string> &stops, vector<long long> &trams_numbers,
         return true;
     }
 
-    auto last_stop_name = stops[n];
-    auto first_time = schedule_for_trams[trams_numbers[0]][first_stop_name];
-    auto last_time = schedule_for_trams[trams_numbers[n]][last_stop_name];
-    auto summary_time = last_time - first_time + 1;
+    string last_stop_name = stops[n];
+    int first_time = schedule_for_trams[trams_numbers[0]][first_stop_name];
+    int last_time = schedule_for_trams[trams_numbers[n]][last_stop_name];
+    int summary_time = last_time - first_time + 1;
 
     //  we can't buy tickets
     if (final_tickets[summary_time].size() == 0) {
@@ -185,7 +185,7 @@ bool ask_for_tickets(vector <string> &stops, vector<long long> &trams_numbers,
     number_of_tickets += final_tickets[summary_time].size();
     bool semicolon = false;
     cout << "!";
-    for (auto ticket: final_tickets[summary_time]) {
+    for (long long ticket: final_tickets[summary_time]) {
         if (semicolon)
             cout << ";";
         else
@@ -244,9 +244,11 @@ void question_about_ticket_command(string line, int line_number,
     i++;
     while ((i != sregex_iterator()) && !error) {
         trams_numbers.at(j) = stoll((*i).str());
+        //  checks if given tram number is unique
         if (is_tram_present(trams_numbers.at(j), schedule_for_trams)) {
             i++;
             stops.at(j + 1) = (*i).str();
+            //  checks if tram passes through given stops
             if (!check_if_tram_at_stop(trams_numbers.at(j), stops.at(j),
                                        schedule_for_trams)
                 || !check_if_tram_at_stop(trams_numbers.at(j), stops.at(j + 1),
@@ -259,12 +261,12 @@ void question_about_ticket_command(string line, int line_number,
             error = true;
         }
     }
+    
     if (!error && !ask_for_tickets(stops, trams_numbers,
                                    schedule_for_trams, number_of_tickets,
                                    ticket_name, final_tickets)) {
         error = true;
     }
-
 
     if (error) {
         print_error(line, line_number);
@@ -293,11 +295,13 @@ void add_tram_command(string line, int line_number,
             hours = stoi((*i).str());
             i++;
             minutes = stoi((*i).str());
+            //  time is like 22:74 etc.
             if (hours > LAST_HOUR || minutes >= MINUTES_IN_HOUR) {
                 error = true;
             }
             else {
                 current_time = time_to_minutes(hours, minutes);
+                // check if time is between 5:55 and 21:21
                 if ((current_time >= LOWER_TIME_LIMIT)
                     && (current_time <= UPPER_TIME_LIMIT)) {
                     i++;
@@ -305,6 +309,7 @@ void add_tram_command(string line, int line_number,
                     stops.at(j) = (*i).str();
                     i++;
                     j++;
+                    //  checks if given times are ascending
                     if (current_time <= previous_time) {
                         error = true;
                     }
