@@ -10,14 +10,14 @@
 
 using namespace std;
 
-const int mx_time = 950;
+const int MX_TIME = 950;
 const long long INF = numeric_limits<double>::infinity();
 
-const int lower_time_limit = 355;
-const int upper_time_limit = 1281;
+const int LOWER_TIME_LIMIT = 355;
+const int UPPER_TIME_LIMIT = 1281;
 
-const int minutes_in_hour = 60;
-const int pennys_in_price_integral = 100;
+const int MINUTES_IN_HOUR = 60;
+const int PENNYS_IN_PRICE_INTEGRAL = 100;
 
 const regex assistant_regex("[0-9]+|[a-zA-Z_^]+");
 const regex question_regex(
@@ -41,17 +41,14 @@ bool check_if_tram_at_stop(const long long tram_number, string &stop,
     if (!is_tram_present(tram_number, schedule_for_trams))
         return false;
 
-    if (schedule_for_trams[tram_number].count(stop) == 0)
-        return false;
-
-    return true;
+    return (bool) schedule_for_trams[tram_number].count(stop);
 }
 
 //  adds tram trace to schedule
 //  returns false if there is a loop in given tram trace
 bool add_tram(const long long tram_number, vector<int> &schedule_time,
               vector <string> &tram_stops,
-              unordered_map<long long, unordered_map<string, int> > &schedule_for_trams) {
+              unordered_map<long long, unordered_map<string, int>> &schedule_for_trams) {
 
     bool stop_repeated = false;
     for (size_t i = 0; i < tram_stops.size(); ++i) {
@@ -90,8 +87,8 @@ bool add_ticket(string &name, const long long price, long long minutes,
         return false;
 
     //  time exceeds maximum minutes for a day
-    if (minutes > mx_time)
-        minutes = mx_time;
+    if (minutes > MX_TIME)
+        minutes = MX_TIME;
 
     unsigned long long ticket_id = ticket_name.size();
 
@@ -101,9 +98,9 @@ bool add_ticket(string &name, const long long price, long long minutes,
     ticket_time.push_back(minutes);
 
     for (int multiple_ticket = 1; multiple_ticket <= 3; ++multiple_ticket) {
-        for (long long i = mx_time; i >= minutes; --i) {
+        for (long long i = MX_TIME; i >= minutes; --i) {
             //  greater time has better tickets
-            if (i < mx_time) {
+            if (i < MX_TIME) {
                 if (cost[i] > cost[i + 1]) {
                     cost[i] = cost[i + 1];
                     proposed_tickets[i] = proposed_tickets[i + 1];
@@ -152,7 +149,7 @@ bool add_ticket(string &name, const long long price, long long minutes,
 //  returns true if nothing have to be printed on stderr
 bool ask_for_tickets(vector <string> &stops, vector<long long> &trams_numbers,
                      vector <vector<unsigned long long>> &proposed_tickets,
-                     unordered_map<long long, unordered_map<string, int> > &schedule_for_trams,
+                     unordered_map<long long, unordered_map<string, int>> &schedule_for_trams,
                      long long &number_of_tickets,
                      vector <string> &ticket_name) {
     long long n = trams_numbers.size();
@@ -233,12 +230,12 @@ int number_of_whitespaces(string line) {
 
 //  converts time to minutes
 int time_to_minutes(int hours, int minutes) {
-    return hours * minutes_in_hour + minutes;
+    return hours * MINUTES_IN_HOUR + minutes;
 }
 
 //  converts price to pennys
 long long price_to_pennys(long price_integral, int price_fractional) {
-    return price_integral * pennys_in_price_integral + price_fractional;
+    return price_integral * PENNYS_IN_PRICE_INTEGRAL + price_fractional;
 }
 
 //  extracts data from question about ticket command and checks for an error
@@ -249,7 +246,7 @@ void question_about_ticket_command(string line, int line_number,
                                    vector<long long> &trams_numbers,
                                    vector <vector<unsigned long long>> &proposed_tickets,
                                    long long &number_of_tickets,
-                                   unordered_map<long long, unordered_map<string, int> > &schedule_for_trams,
+                                   unordered_map<long long, unordered_map<string, int>> &schedule_for_trams,
                                    vector <string> &ticket_name) {
     bool error = false;
     int number_of_stops = 0;
@@ -295,7 +292,7 @@ void question_about_ticket_command(string line, int line_number,
 //  if an error occurs, calls print_error function
 void add_tram_command(string line, int line_number, long long tram_number,
                       vector <string> &stops, vector<int> &times,
-                      unordered_map<long long, unordered_map<string, int> > &schedule_for_trams) {
+                      unordered_map<long long, unordered_map<string, int>> &schedule_for_trams) {
     bool error = false;
     int number_of_stops = 0;
 
@@ -312,8 +309,8 @@ void add_tram_command(string line, int line_number, long long tram_number,
             hour = stoi((*i).str());
             i++;
             current_time = time_to_minutes(hour, stoi((*i).str()));
-            if ((current_time >= lower_time_limit)
-                && (current_time <= upper_time_limit)) {
+            if ((current_time >= LOWER_TIME_LIMIT)
+                && (current_time <= UPPER_TIME_LIMIT)) {
                 i++;
                 times.at(j) = current_time;
                 stops.at(j) = (*i).str();
@@ -361,13 +358,13 @@ int main() {
     int line_number = 0;
     long long number_of_tickets = 0, price = -1, validity = -1, tram_number = -1;
     //  container mapping tram number to map with stop name as key
-    unordered_map<long long, unordered_map<string, int> > schedule_for_trams;
+    unordered_map<long long, unordered_map<string, int>> schedule_for_trams;
     vector <string> stops, ticket_name;
     //  containers for tickets' data
     vector<long long> trams_numbers, ticket_price, ticket_time;
     //  container holding cost for given time
-    vector<long long> cost(mx_time + 2, INF);
-    vector <vector<unsigned long long>> proposed_tickets(mx_time + 2);
+    vector<long long> cost(MX_TIME + 2, INF);
+    vector <vector<unsigned long long>> proposed_tickets(MX_TIME + 2);
     vector<int> times;
     //  container remembering tickets' names that already occurred
     unordered_set <string> present_ticket;
