@@ -77,12 +77,12 @@ bool add_tram(const long long tram_number, vector<int> &schedule_time,
 
 //  adds new available ticket and updates optimal cost for given time
 bool add_ticket(string &name, const long long price, long long minutes,
-                vector<string> &ticket_name,
+                vector <string> &ticket_name,
                 vector<long long> &ticket_price, vector<long long> &ticket_time,
-                vector<long long> &cost,
-                vector<vector<unsigned long long> > &proposed_tickets,
-                unordered_set<string> &present_ticket,
-                vector<vector<unsigned long long> > &final_tickets) {
+                vector<vector<long long>> &cost,
+                vector <vector <vector <unsigned long long>>> &proposed_tickets,
+                unordered_set <string> &present_ticket,
+                vector <vector<unsigned long long>> &final_tickets) {
 
     if (present_ticket.find(name) != present_ticket.end())
         return false;
@@ -98,53 +98,34 @@ bool add_ticket(string &name, const long long price, long long minutes,
     ticket_price.push_back(price);
     ticket_time.push_back(minutes);
 
-    for (int multiple_ticket = 1; multiple_ticket <= 3; ++multiple_ticket) {
+    for (int layer = 1; layer <= 3; ++layer) {
         for (long long i = MX_TIME; i >= minutes; --i) {
-            //  greater time has better tickets
-            if (i < MX_TIME) {
-                if (cost[i] > cost[i + 1]) {
-                    cost[i] = cost[i + 1];
-                    proposed_tickets[i] = proposed_tickets[i + 1];
-                } else if (cost[i] == cost[i + 1] &&
-                           proposed_tickets[i].size() >
-                           proposed_tickets[i + 1].size()) {
-                    cost[i] = cost[i + 1];
-                    proposed_tickets[i] = proposed_tickets[i + 1];
-                }
-            }
-
             //  knapsack approach, use previously counted cost
-            if (cost[i - minutes] != INF &&
-                proposed_tickets[i - minutes].size() < 3) {
-                if (cost[i] > cost[i - minutes] + price) {
-                    cost[i] = cost[i - minutes] + price;
-                    proposed_tickets[i] = proposed_tickets[i - minutes];
-                    proposed_tickets[i].push_back(ticket_id);
-                } else if (cost[i] == cost[i - minutes] + price
-                           && proposed_tickets[i - minutes].size() + 1 <
-                              proposed_tickets[i].size()) {
-
-                    proposed_tickets[i] = proposed_tickets[i - minutes];
-                    proposed_tickets[i].push_back(ticket_id);
+            if (cost[layer-1][i - minutes] != INF) {
+                if (cost[layer][i] > cost[layer-1][i - minutes] + price) {
+                    cost[layer][i] = cost[layer-1][i - minutes] + price;
+                    proposed_tickets[layer][i] = proposed_tickets[layer-1][i - minutes];
+                    proposed_tickets[layer][i].push_back(ticket_id);
                 }
             }
         }
     }
 
-    long long minimum_cost = cost[MX_TIME];
-    vector<unsigned long long> best_tickets = proposed_tickets[MX_TIME];
-    for (long long i = MX_TIME-1; i >= 1; --i) {
-        if (cost[i] > minimum_cost) {
-            final_tickets[i] = best_tickets;
-        }
-        else {
-            final_tickets[i] = proposed_tickets[i];
-            if(minimum_cost > cost[i]) {
-                minimum_cost = cost[i];
-                best_tickets = proposed_tickets[i];
+    long long minimum_cost = cost[3][MX_TIME];
+    vector<unsigned long long> best_tickets = proposed_tickets[3][MX_TIME];
+
+    for (long long i = MX_TIME; i >= 1; --i) {
+        for (int layer = 1; layer <= 3; ++layer) {
+            if (cost[layer][i] > minimum_cost) {
+                final_tickets[i] = best_tickets;
+            } else {
+                final_tickets[i] = proposed_tickets[layer][i];
+                if (minimum_cost > cost[layer][i]) {
+                    minimum_cost = cost[layer][i];
+                    best_tickets = proposed_tickets[layer][i];
+                }
             }
         }
-
     }
 
     return true;
@@ -152,11 +133,11 @@ bool add_ticket(string &name, const long long price, long long minutes,
 
 //  prints names of best maximum 3 tickets
 //  returns true if nothing have to be printed on stderr
-bool ask_for_tickets(vector<string> &stops, vector<long long> &trams_numbers,
+bool ask_for_tickets(vector <string> &stops, vector<long long> &trams_numbers,
                      unordered_map<long long, unordered_map<string, int> > &schedule_for_trams,
                      long long &number_of_tickets,
-                     vector<string> &ticket_name,
-                     vector<vector<unsigned long long> > &final_tickets) {
+                     vector <string> &ticket_name,
+                     vector <vector<unsigned long long>> &final_tickets) {
     long long n = trams_numbers.size();
     trams_numbers.push_back(trams_numbers[n - 1]);
     auto previous_tram = trams_numbers[0];
@@ -249,12 +230,13 @@ long long price_to_pennys(long price_integral, int price_fractional) {
 void question_about_ticket_command(string line, int line_number,
                                    long long &number_of_tickets,
                                    unordered_map<long long, unordered_map<string, int> > &schedule_for_trams,
-                                   vector <string> &ticket_name, vector<vector<unsigned long long> > final_tickets) {
+                                   vector <string> &ticket_name,
+                                   vector <vector<unsigned long long>> final_tickets) {
     bool error = false;
     sregex_iterator i = sregex_iterator(line.begin(),
                                         line.end(), assistant_regex);
     int number_of_stops = (number_of_whitespaces(line) + 1) / 2;
-    vector<string> stops = vector<string>(number_of_stops);
+    vector <string> stops = vector<string>(number_of_stops);
     vector<long long> trams_numbers = vector<long long>(number_of_stops - 1);
     int j = 0;
     stops.at(j) = (*i).str();
@@ -295,7 +277,7 @@ void add_tram_command(string line, int line_number,
                       unordered_map<long long, unordered_map<string, int> > &schedule_for_trams) {
     bool error = false;
     int number_of_stops = 0;
-    vector<string> stops;
+    vector <string> stops;
     vector<int> times;
     sregex_iterator i = sregex_iterator(line.begin(),
                                         line.end(), assistant_regex);
@@ -303,8 +285,8 @@ void add_tram_command(string line, int line_number,
     i++;
     if (!is_tram_present(tram_number, schedule_for_trams)) {
         number_of_stops = number_of_whitespaces(line) / 2;
-        stops = vector<string>(number_of_stops);
-        times = vector<int>(number_of_stops);
+        stops = vector <string>(number_of_stops);
+        times = vector <int>(number_of_stops);
         int j = 0, current_time = 0, previous_time = 0, hour = 0;
         while ((i != sregex_iterator()) && !error) {
             hour = stoi((*i).str());
@@ -360,17 +342,27 @@ int main() {
     long long number_of_tickets = 0, price = -1, validity = -1;
     //  container mapping tram number to map with stop name as key
     unordered_map<long long, unordered_map<string, int> > schedule_for_trams;
-    vector<string> ticket_name;
+    vector <string> ticket_name;
     //  containers for tickets' data
-    vector<long long> ticket_price, ticket_time;
-    //  container holding cost for given time
-    vector<long long> cost(MX_TIME + 2, INF);
-    vector<vector<unsigned long long> > proposed_tickets(MX_TIME + 2);
-    vector<vector<unsigned long long> > final_tickets(MX_TIME + 2);
+    vector <long long> ticket_price, ticket_time;
+    vector <vector <unsigned long long>> final_tickets(MX_TIME + 3);
     //  container remembering tickets' names that already occurred
-    unordered_set<string> present_ticket;
+    unordered_set <string> present_ticket;
 
-    cost[0] = 0;
+    vector <vector <vector <unsigned long long>>> proposed_tickets(4);
+    for (int i = 0; i < 4; ++i) {
+        proposed_tickets[i].resize(MX_TIME + 3);
+    }
+
+    //  container holding cost for given time
+    vector <vector <long long>> cost(4);
+    for (int i = 0; i < 4; ++i) {
+        cost[i].resize(MX_TIME + 3);
+        for(unsigned long long j = 0; j < proposed_tickets[i].size(); ++j)
+            cost[i][j] = INF;
+    }
+
+    cost[0][0] = 0;
 
     while (!getline(cin, line).eof()) {
         line_number++;
