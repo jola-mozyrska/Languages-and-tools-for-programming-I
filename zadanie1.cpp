@@ -29,7 +29,7 @@ const regex ticket_regex(
 
 //  checks if the tram number was already added
 bool is_tram_present(const long long tram_number,
-                     unordered_map<long long, unordered_map<string, int>> &schedule_for_trams) {
+                     unordered_map<long long, unordered_map<string, int> > &schedule_for_trams) {
     if (schedule_for_trams.count(tram_number) == 0)
         return false;
     return true;
@@ -37,7 +37,7 @@ bool is_tram_present(const long long tram_number,
 
 //  checks if the tram stops at given stop
 bool check_if_tram_at_stop(const long long tram_number, string &stop,
-                           unordered_map<long long, unordered_map<string, int>> &schedule_for_trams) {
+                           unordered_map<long long, unordered_map<string, int> > &schedule_for_trams) {
     if (!is_tram_present(tram_number, schedule_for_trams))
         return false;
 
@@ -48,7 +48,7 @@ bool check_if_tram_at_stop(const long long tram_number, string &stop,
 //  returns false if there is a loop in given tram trace
 bool add_tram(const long long tram_number, vector<int> &schedule_time,
               vector <string> &tram_stops,
-              unordered_map<long long, unordered_map<string, int>> &schedule_for_trams) {
+              unordered_map<long long, unordered_map<string, int> > &schedule_for_trams) {
 
     bool stop_repeated = false;
     for (size_t i = 0; i < tram_stops.size(); ++i) {
@@ -80,9 +80,9 @@ bool add_ticket(string &name, const long long price, long long minutes,
                 vector<string> &ticket_name,
                 vector<long long> &ticket_price, vector<long long> &ticket_time,
                 vector<long long> &cost,
-                vector<vector<unsigned long long>> &proposed_tickets,
+                vector<vector<unsigned long long> > &proposed_tickets,
                 unordered_set<string> &present_ticket,
-                vector<vector<unsigned long long>> &final_tickets) {
+                vector<vector<unsigned long long> > &final_tickets) {
 
     if (present_ticket.find(name) != present_ticket.end())
         return false;
@@ -153,10 +153,10 @@ bool add_ticket(string &name, const long long price, long long minutes,
 //  prints names of best maximum 3 tickets
 //  returns true if nothing have to be printed on stderr
 bool ask_for_tickets(vector<string> &stops, vector<long long> &trams_numbers,
-                     unordered_map<long long, unordered_map<string, int>> &schedule_for_trams,
+                     unordered_map<long long, unordered_map<string, int> > &schedule_for_trams,
                      long long &number_of_tickets,
                      vector<string> &ticket_name,
-                     vector<vector<unsigned long long>> &final_tickets) {
+                     vector<vector<unsigned long long> > &final_tickets) {
     long long n = trams_numbers.size();
     trams_numbers.push_back(trams_numbers[n - 1]);
     auto previous_tram = trams_numbers[0];
@@ -247,18 +247,15 @@ long long price_to_pennys(long price_integral, int price_fractional) {
 //  calls ask_for_tickets function if there was no error before
 //  if an error occurs, calls print_error function
 void question_about_ticket_command(string line, int line_number,
-                                   vector<string> &stops,
-                                   vector<long long> &trams_numbers,
                                    long long &number_of_tickets,
-                                   unordered_map<long long, unordered_map<string, int>> &schedule_for_trams,
-                                   vector <string> &ticket_name, vector<vector<unsigned long long>> final_tickets) {
+                                   unordered_map<long long, unordered_map<string, int> > &schedule_for_trams,
+                                   vector <string> &ticket_name, vector<vector<unsigned long long> > final_tickets) {
     bool error = false;
-    int number_of_stops = 0;
     sregex_iterator i = sregex_iterator(line.begin(),
                                         line.end(), assistant_regex);
-    number_of_stops = (number_of_whitespaces(line) + 1) / 2;
-    stops = vector<string>(number_of_stops);
-    trams_numbers = vector<long long>(number_of_stops - 1);
+    int number_of_stops = (number_of_whitespaces(line) + 1) / 2;
+    vector<string> stops = vector<string>(number_of_stops);
+    vector<long long> trams_numbers = vector<long long>(number_of_stops - 1);
     int j = 0;
     stops.at(j) = (*i).str();
     i++;
@@ -294,15 +291,15 @@ void question_about_ticket_command(string line, int line_number,
 //  extracts data from add tram command and checks for an error
 //  calls add_tram function if there was no error before
 //  if an error occurs, calls print_error function
-void add_tram_command(string line, int line_number, long long tram_number,
-                      vector<string> &stops, vector<int> &times,
-                      unordered_map<long long, unordered_map<string, int>> &schedule_for_trams) {
+void add_tram_command(string line, int line_number,
+                      unordered_map<long long, unordered_map<string, int> > &schedule_for_trams) {
     bool error = false;
     int number_of_stops = 0;
-
+    vector<string> stops;
+    vector<int> times;
     sregex_iterator i = sregex_iterator(line.begin(),
                                         line.end(), assistant_regex);
-    tram_number = stoll((*i).str());
+    long long tram_number = stoll((*i).str());
     i++;
     if (!is_tram_present(tram_number, schedule_for_trams)) {
         number_of_stops = number_of_whitespaces(line) / 2;
@@ -360,17 +357,16 @@ int main() {
     smatch result;
     string line, name = "";
     int line_number = 0;
-    long long number_of_tickets = 0, price = -1, validity = -1, tram_number = -1;
+    long long number_of_tickets = 0, price = -1, validity = -1;
     //  container mapping tram number to map with stop name as key
-    unordered_map<long long, unordered_map<string, int>> schedule_for_trams;
-    vector<string> stops, ticket_name;
+    unordered_map<long long, unordered_map<string, int> > schedule_for_trams;
+    vector<string> ticket_name;
     //  containers for tickets' data
-    vector<long long> trams_numbers, ticket_price, ticket_time;
+    vector<long long> ticket_price, ticket_time;
     //  container holding cost for given time
     vector<long long> cost(MX_TIME + 2, INF);
-    vector<vector<unsigned long long>> proposed_tickets(MX_TIME + 2);
-    vector<vector<unsigned long long>> final_tickets(MX_TIME + 2);
-    vector<int> times;
+    vector<vector<unsigned long long> > proposed_tickets(MX_TIME + 2);
+    vector<vector<unsigned long long> > final_tickets(MX_TIME + 2);
     //  container remembering tickets' names that already occurred
     unordered_set<string> present_ticket;
 
@@ -380,14 +376,12 @@ int main() {
         line_number++;
         if (!line.empty()) {
             if (regex_match(line, question_regex)) {
-                question_about_ticket_command(line, line_number, stops,
-                                              trams_numbers,
+                question_about_ticket_command(line, line_number,
                                               number_of_tickets,
                                               schedule_for_trams,
                                               ticket_name, final_tickets);
             } else if (regex_match(line, tram_regex)) {
-                add_tram_command(line, line_number, tram_number, stops, times,
-                                 schedule_for_trams);
+                add_tram_command(line, line_number, schedule_for_trams);
             } else if (regex_match(line, result, ticket_regex)) {
                 add_ticket_command(result, name, price, validity);
                 if (!add_ticket(name, price, validity, ticket_name,
