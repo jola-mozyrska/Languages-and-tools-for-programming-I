@@ -1,4 +1,3 @@
-// komentarze
 #include <string>
 #include <iostream>
 #include <unordered_map>
@@ -14,6 +13,11 @@ const bool debug = false;
 #endif
 
 namespace {
+    using poset_container_type =
+    std::unordered_map<unsigned long,
+            std::unordered_map<unsigned long,
+                    std::unordered_set<unsigned long>>>;
+
     //  Ensures std::cerr has been initialized before using it
     //  Otherwise static initialization might break something
     std::ostream &safe_cerr() {
@@ -31,9 +35,8 @@ namespace {
         return max_element_id;
     }
 
-    std::unordered_map<unsigned long, std::unordered_map<unsigned long, std::unordered_set<unsigned long>>> &
-    get_neighbours_in_poset() {
-        static std::unordered_map<unsigned long, std::unordered_map<unsigned long, std::unordered_set<unsigned long>>> neighbours_in_poset;
+    poset_container_type &get_neighbours_in_poset() {
+        static poset_container_type neighbours_in_poset;
         return neighbours_in_poset;
     }
 
@@ -186,7 +189,7 @@ namespace {
         get_neighbours_in_poset()[id][element_id_1].insert(element_id_2);
 
         //  adding element bigger than value2 to value1 neighbours
-        for (auto const& son : get_neighbours_in_poset()[id][element_id_2]) {
+        for (auto const &son : get_neighbours_in_poset()[id][element_id_2]) {
             get_neighbours_in_poset()[id][element_id_1].insert(son);
         }
 
@@ -195,7 +198,7 @@ namespace {
                 get_neighbours_in_poset()[id][value_1_father].insert(
                         element_id_2);
 
-                for (auto const& son : get_neighbours_in_poset()[id][element_id_2]) {
+                for (auto const &son : get_neighbours_in_poset()[id][element_id_2]) {
                     get_neighbours_in_poset()[id][value_1_father].insert(son);
                 }
             }
@@ -203,6 +206,34 @@ namespace {
 
         debug_relation("poset_add", id, element_name_1, element_name_2,
                        "added");
+        return true;
+    }
+
+    //  helper function for poset_del
+    bool _remove_relation(unsigned long id, std::string element_name_1,
+                          std::string element_name_2) {
+        auto element_id_1 = get_map_of_values_ids()[element_name_1];
+        auto element_id_2 = get_map_of_values_ids()[element_name_2];
+
+        if (element_name_1 == element_name_2 ||
+            !get_neighbours_in_poset()[id][element_id_1].count(element_id_2)) {
+            debug_relation("poset_del", id, element_name_1, element_name_2,
+                           "cannot be deleted");
+            return false;
+        }
+
+        for (auto child : get_neighbours_in_poset()[id][element_id_1]) {
+            if (child != element_id_1 && child != element_id_2 &&
+                get_neighbours_in_poset()[id][child].count(element_id_2)) {
+                //  we can not remove the edge because relation between value1 and value2 won't be
+                //  transitional
+                debug_relation("poset_del", id, element_name_1, element_name_2,
+                               "cannot be deleted");
+                return false;
+            }
+        }
+
+        get_neighbours_in_poset()[id][element_id_1].erase(element_id_2);
         return true;
     }
 }
@@ -217,6 +248,7 @@ namespace jnp1 {
                         << "\", \""
                         << element_name_2 << "\")" << std::endl;
 
+        //  tests if pointers aren't nulls
         check_value("poset_test", value1, "1");
         check_value("poset_test", value2, "2");
         if (value1 == nullptr || value2 == nullptr)
@@ -246,6 +278,7 @@ namespace jnp1 {
         if (debug)
             safe_cerr() << "poset_new()" << std::endl;
 
+        //  poset gets new id
         get_neighbours_in_poset()[get_max_poset_id()] = {};
         ++get_max_poset_id();
 
@@ -350,6 +383,7 @@ namespace jnp1 {
         auto element_id_1 = get_map_of_values_ids()[element_name_1];
         auto element_id_2 = get_map_of_values_ids()[element_name_2];
 
+        //  checks if the elements are in any relation to each other
         if (get_neighbours_in_poset()[id][element_id_1].count(element_id_2) ||
             get_neighbours_in_poset()[id][element_id_2].count(element_id_1)) {
             debug_relation("poset_add", id, element_name_1, element_name_2,
@@ -377,28 +411,9 @@ namespace jnp1 {
         if (!check_existance("poset_del", id, element_name_1, element_name_2))
             return false;
 
-        auto element_id_1 = get_map_of_values_ids()[element_name_1];
-        auto element_id_2 = get_map_of_values_ids()[element_name_2];
-
-        if (element_name_1 == element_name_2 ||
-            !get_neighbours_in_poset()[id][element_id_1].count(element_id_2)) {
-            debug_relation("poset_del", id, element_name_1, element_name_2,
-                           "cannot be deleted");
+        if (!_remove_relation(id, element_name_1, element_name_2))
             return false;
-        }
 
-        for (auto child : get_neighbours_in_poset()[id][element_id_1]) {
-            if (child != element_id_1 && child != element_id_2 &&
-                get_neighbours_in_poset()[id][child].count(element_id_2)) {
-                //  we can not remove the edge because relation between value1 and value2 won't be
-                //  transitional
-                debug_relation("poset_del", id, element_name_1, element_name_2,
-                               "cannot be deleted");
-                return false;
-            }
-        }
-
-        get_neighbours_in_poset()[id][element_id_1].erase(element_id_2);
         debug_relation("poset_del", id, element_name_1, element_name_2,
                        "deleted");
         return true;
