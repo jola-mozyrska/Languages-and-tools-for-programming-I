@@ -1,6 +1,5 @@
 //  TODO: tests 3.
 //  TODO: zmien ll na unsigned long
-// on students
 // komentarze
 #include <string>
 #include <iostream>
@@ -17,14 +16,11 @@ const bool debug = false;
 #endif
 
 namespace {
+    //  Ensures std::cerr has been initialized before using it
+    //  Otherwise static initialization might break something
     std::ostream &safe_cerr() {
         static std::ios_base::Init mInitializer;
         return std::cerr;
-    }
-
-    std::unordered_map<unsigned long, size_t> &get_nr_of_elements_in_poset() {
-        static std::unordered_map<unsigned long, size_t> nr_of_elements_in_poset;
-        return nr_of_elements_in_poset;
     }
 
     unsigned long &get_max_poset_id() {
@@ -37,7 +33,8 @@ namespace {
         return max_element_id;
     }
 
-    std::unordered_map<unsigned long, std::unordered_map<long long, std::unordered_set<long long>>> &get_neighbours_in_poset() {
+    std::unordered_map<unsigned long, std::unordered_map<long long, std::unordered_set<long long>>> &
+    get_neighbours_in_poset() {
         static std::unordered_map<unsigned long, std::unordered_map<long long, std::unordered_set<long long>>> neighbours_in_poset;
         return neighbours_in_poset;
     }
@@ -48,77 +45,78 @@ namespace {
     }
 
     std::string get_string_from_pointer(char const *value) {
-        if(value == nullptr)
+        if (value == nullptr)
             return "NULL";
         return std::string(value);
     }
 
-    //poset_del: poset 0, relation ("E", "F") cannot be deleted
+    //  prints debug message about relation in a poset
     void debug_relation(const std::string &function_name, unsigned long id,
                         const std::string &element_1,
                         const std::string &element_2,
                         const std::string &message) {
         if (debug)
             safe_cerr() << function_name << ": poset " << id << ", relation (\""
-                      << element_1 << "\", \"" << element_2 << "\") " << message
-                      << std::endl;
+                        << element_1 << "\", \"" << element_2 << "\") "
+                        << message
+                        << std::endl;
     }
 
-    //  poset_del: invalid value1 (NULL)
+    //  prints debug message about null value
     void debug_invalid_value(const std::string &function_name,
                              const std::string &value_number) {
         if (debug)
             safe_cerr() << function_name << ": invalid value" << value_number
-                      << " (NULL)" << std::endl;
+                        << " (NULL)" << std::endl;
     }
 
-    //poset_del: poset 0, element "D" or "C" does not exist
+    //  prints debug message about absence of elements
     void debug_two_elements_do_not_exist(const std::string &function_name,
-                                    unsigned long id,
-                                    const std::string &element_1,
-                                    const std::string &element_2) {
+                                         unsigned long id,
+                                         const std::string &element_1,
+                                         const std::string &element_2) {
         if (debug) {
             std::string message = "does not exist";
             safe_cerr() << function_name << ": poset " << id << ", element \""
-                      << element_1 << "\" or \"" << element_2 << "\" "
-                      << message
-                      << std::endl;
+                        << element_1 << "\" or \"" << element_2 << "\" "
+                        << message
+                        << std::endl;
         }
     }
 
-    //poset_remove: poset 0, element "A" removed
+    //  prints debug message connected to the element
     void debug_one_element_message(const std::string &function_name,
                                    unsigned long id,
                                    const std::string &element,
                                    const std::string &message) {
         if (debug)
             safe_cerr() << function_name << ": poset " << id << ", element \""
-                      << element << "\" " << message << std::endl;
+                        << element << "\" " << message << std::endl;
     }
 
-    //poset_insert: poset 1 does not exist
+    //  prints debug message about absence of poset
     void debug_poset_does_not_exist(const std::string &function_name,
                                     unsigned long id) {
         if (debug) {
             std::string message = "does not exist";
             safe_cerr() << function_name << ": poset " << id << " " << message
-                      << std::endl;
+                        << std::endl;
         }
     }
 
-    //poset_size: poset 0 contains 3 element(s)
+    //  prints debug message about poset's size
     void debug_poset_size(unsigned long id, long long number_of_elements) {
         if (debug)
             safe_cerr() << "poset_size: poset " << id << " contains "
-                      << number_of_elements << " element(s)" << std::endl;
+                        << number_of_elements << " element(s)" << std::endl;
     }
 
-    //poset_new: poset 0 created
+    //  prints debug message about poset
     void debug_poset_message(const std::string &function_name, unsigned long id,
                              const std::string &message) {
         if (debug)
             safe_cerr() << function_name << ": poset " << id << " " << message
-                      << std::endl;
+                        << std::endl;
     }
 
     bool check_value(const std::string &function_name, char const *value,
@@ -130,6 +128,7 @@ namespace {
         return true;
     }
 
+    //  checks presence of poset and 2 elements
     bool check_existance(const std::string &function_name, unsigned long id,
                          const std::string &element_name_1,
                          const std::string &element_name_2) {
@@ -138,6 +137,7 @@ namespace {
             return false;
         }
 
+        //  checks presence of id for 2 elements
         if (!get_map_of_values_ids().count(element_name_1) ||
             !get_map_of_values_ids().count(element_name_2)) {
             debug_two_elements_do_not_exist(function_name, id, element_name_1,
@@ -156,7 +156,8 @@ namespace {
         return true;
     }
 
-    bool _remove_element(unsigned long id, const std::string& element_name) {
+    //  helper function for poset_remove
+    bool _remove_element(unsigned long id, const std::string &element_name) {
         if (get_map_of_values_ids().count(element_name)) {
             auto element_id = get_map_of_values_ids()[element_name];
             //  element exists in this poset
@@ -169,7 +170,6 @@ namespace {
 
                 debug_one_element_message("poset_remove", id, element_name,
                                           "removed");
-                get_nr_of_elements_in_poset()[id]--;
                 return true;
             }
         }
@@ -178,7 +178,9 @@ namespace {
         return false;
     }
 
-    bool _add_element(unsigned long id, const std::string& element_name_1, const std::string& element_name_2) {
+    //  helper function for poset_add
+    bool _add_relation(unsigned long id, const std::string &element_name_1,
+                       const std::string &element_name_2) {
         auto element_id_1 = get_map_of_values_ids()[element_name_1];
         auto element_id_2 = get_map_of_values_ids()[element_name_2];
 
@@ -187,11 +189,13 @@ namespace {
 
         for (auto const&[value_1_father, set_of_sons] : get_neighbours_in_poset()[id]) {
             if (set_of_sons.find(element_id_1) != set_of_sons.end()) {
-                get_neighbours_in_poset()[id][value_1_father].insert(element_id_2);
+                get_neighbours_in_poset()[id][value_1_father].insert(
+                        element_id_2);
             }
         }
 
-        debug_relation("poset_add", id, element_name_1, element_name_2, "added");
+        debug_relation("poset_add", id, element_name_1, element_name_2,
+                       "added");
         return true;
     }
 }
@@ -203,15 +207,15 @@ namespace jnp1 {
 
         if (debug)
             safe_cerr() << "poset_test(" << id << ", \"" << element_name_1
-                      << "\", \""
-                      << element_name_2 << "\")" << std::endl;
+                        << "\", \""
+                        << element_name_2 << "\")" << std::endl;
 
         check_value("poset_test", value1, "1");
         check_value("poset_test", value2, "2");
         if (value1 == nullptr || value2 == nullptr)
             return false;
 
-        if(!get_map_of_values_ids().count(element_name_1))
+        if (!get_map_of_values_ids().count(element_name_1))
             safe_cerr() << "tu";
 
         if (!check_existance("poset_test", id, element_name_1, element_name_2))
@@ -235,13 +239,11 @@ namespace jnp1 {
         if (debug)
             safe_cerr() << "poset_new()" << std::endl;
 
-        auto max_poset_id = get_max_poset_id();
-        get_neighbours_in_poset()[max_poset_id] = {};
-        get_nr_of_elements_in_poset()[max_poset_id] = 0;
-        ++max_poset_id;
+        get_neighbours_in_poset()[get_max_poset_id()] = {};
+        ++get_max_poset_id();
 
-        debug_poset_message("poset_new", max_poset_id - 1, "created");
-        return max_poset_id - 1;
+        debug_poset_message("poset_new", get_max_poset_id() - 1, "created");
+        return get_max_poset_id() - 1;
     }
 
     void poset_delete(unsigned long id) {
@@ -253,7 +255,6 @@ namespace jnp1 {
             return;
         }
 
-        get_nr_of_elements_in_poset()[id] = 0;
         get_neighbours_in_poset().erase(id);
         debug_poset_message("poset_delete", id, "deleted");
     }
@@ -267,7 +268,7 @@ namespace jnp1 {
             return 0;
         }
 
-        auto s = get_nr_of_elements_in_poset()[id];
+        auto s = get_neighbours_in_poset()[id].size();
         debug_poset_size(id, s);
         return s;
     }
@@ -276,8 +277,8 @@ namespace jnp1 {
         std::string element_name = get_string_from_pointer(value);
         if (debug)
             safe_cerr() << "poset_insert(" << id << ", \"" << element_name
-                      << "\")"
-                      << std::endl;
+                        << "\")"
+                        << std::endl;
 
         if (!check_value("poset_insert", value, ""))
             return false;
@@ -285,7 +286,6 @@ namespace jnp1 {
         if (get_neighbours_in_poset().count(id)) {
             //  the value is new
             if (!get_map_of_values_ids().count(element_name)) {
-                safe_cerr()<<"tu";
                 get_map_of_values_ids()[element_name] = get_max_element_id();
                 get_max_element_id()++;
             }
@@ -298,7 +298,6 @@ namespace jnp1 {
             }
 
             get_neighbours_in_poset()[id][element_id] = {element_id};
-            get_nr_of_elements_in_poset()[id]++;
             debug_one_element_message("poset_insert", id, element_name,
                                       "inserted");
             return true;
@@ -313,8 +312,8 @@ namespace jnp1 {
 
         if (debug)
             safe_cerr() << "poset_remove(" << id << ", \"" << element_name
-                      << "\")"
-                      << std::endl;
+                        << "\")"
+                        << std::endl;
 
         if (get_neighbours_in_poset().count(id))
             return _remove_element(id, element_name);
@@ -329,8 +328,9 @@ namespace jnp1 {
         std::string element_name_2 = get_string_from_pointer(value2);
 
         if (debug)
-            safe_cerr() << "poset_add(" << id << ", \"" << element_name_1 << "\", \""
-                      << element_name_2 << "\")" << std::endl;
+            safe_cerr() << "poset_add(" << id << ", \"" << element_name_1
+                        << "\", \""
+                        << element_name_2 << "\")" << std::endl;
 
         check_value("poset_add", value1, "1");
         check_value("poset_add", value2, "2");
@@ -350,7 +350,7 @@ namespace jnp1 {
             return false;
         }
 
-        return _add_element(id, element_name_1, element_name_2);
+        return _add_relation(id, element_name_1, element_name_2);
     }
 
     bool poset_del(unsigned long id, char const *value1, char const *value2) {
@@ -358,8 +358,9 @@ namespace jnp1 {
         std::string element_name_2 = get_string_from_pointer(value2);
 
         if (debug)
-            safe_cerr() << "poset_del(" << id << ", \"" << element_name_1 << "\", \""
-                      << element_name_2 << "\")" << std::endl;
+            safe_cerr() << "poset_del(" << id << ", \"" << element_name_1
+                        << "\", \""
+                        << element_name_2 << "\")" << std::endl;
 
         check_value("poset_del", value1, "1");
         check_value("poset_del", value2, "2");
@@ -384,8 +385,6 @@ namespace jnp1 {
                 get_neighbours_in_poset()[id][child].count(element_id_2)) {
                 //  we can not remove the edge because relation between value1 and value2 won't be
                 //  transitional
-                if (debug)
-                    safe_cerr() << child << "tu";
                 debug_relation("poset_del", id, element_name_1, element_name_2,
                                "cannot be deleted");
                 return false;
@@ -405,7 +404,6 @@ namespace jnp1 {
         if (get_neighbours_in_poset().count(id)) {
             get_neighbours_in_poset().erase(id);
             get_neighbours_in_poset()[id] = {};
-            get_nr_of_elements_in_poset()[id] = 0;
             debug_poset_message("poset_clear", id, "cleared");
         } else
             debug_poset_message("poset_clear", id, "does not exist");
