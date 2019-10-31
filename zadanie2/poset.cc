@@ -194,6 +194,10 @@ namespace {
             }
         }
 
+        for (auto const& son : get_neighbours_in_poset()[id][element_id_2]) {
+            get_neighbours_in_poset()[id][element_id_1].insert(son);
+        }
+
         debug_relation("poset_add", id, element_name_1, element_name_2,
                        "added");
         return true;
