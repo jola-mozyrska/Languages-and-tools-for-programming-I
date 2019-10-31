@@ -1,5 +1,3 @@
-//  TODO: tests 3.
-//  TODO: zmien ll na unsigned long
 // komentarze
 #include <string>
 #include <iostream>
@@ -28,19 +26,19 @@ namespace {
         return max_poset_id;
     }
 
-    long long &get_max_element_id() {
-        static long long max_element_id = 0;
+    unsigned long &get_max_element_id() {
+        static unsigned long max_element_id = 0;
         return max_element_id;
     }
 
-    std::unordered_map<unsigned long, std::unordered_map<long long, std::unordered_set<long long>>> &
+    std::unordered_map<unsigned long, std::unordered_map<unsigned long, std::unordered_set<unsigned long>>> &
     get_neighbours_in_poset() {
-        static std::unordered_map<unsigned long, std::unordered_map<long long, std::unordered_set<long long>>> neighbours_in_poset;
+        static std::unordered_map<unsigned long, std::unordered_map<unsigned long, std::unordered_set<unsigned long>>> neighbours_in_poset;
         return neighbours_in_poset;
     }
 
-    std::unordered_map<std::string, long long> &get_map_of_values_ids() {
-        static std::unordered_map<std::string, long long> map_of_values_ids;
+    std::unordered_map<std::string, unsigned long> &get_map_of_values_ids() {
+        static std::unordered_map<std::string, unsigned long> map_of_values_ids;
         return map_of_values_ids;
     }
 
@@ -105,7 +103,7 @@ namespace {
     }
 
     //  prints debug message about poset's size
-    void debug_poset_size(unsigned long id, long long number_of_elements) {
+    void debug_poset_size(unsigned long id, unsigned long number_of_elements) {
         if (debug)
             safe_cerr() << "poset_size: poset " << id << " contains "
                         << number_of_elements << " element(s)" << std::endl;
