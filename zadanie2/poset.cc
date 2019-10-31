@@ -187,15 +187,20 @@ namespace {
         //  add relation to poset
         get_neighbours_in_poset()[id][element_id_1].insert(element_id_2);
 
+        //  adding element bigger than value2 to value1 neighbours
+        for (auto const& son : get_neighbours_in_poset()[id][element_id_2]) {
+            get_neighbours_in_poset()[id][element_id_1].insert(son);
+        }
+
         for (auto const&[value_1_father, set_of_sons] : get_neighbours_in_poset()[id]) {
             if (set_of_sons.find(element_id_1) != set_of_sons.end()) {
                 get_neighbours_in_poset()[id][value_1_father].insert(
                         element_id_2);
-            }
-        }
 
-        for (auto const& son : get_neighbours_in_poset()[id][element_id_2]) {
-            get_neighbours_in_poset()[id][element_id_1].insert(son);
+                for (auto const& son : get_neighbours_in_poset()[id][element_id_2]) {
+                    get_neighbours_in_poset()[id][value_1_father].insert(son);
+                }
+            }
         }
 
         debug_relation("poset_add", id, element_name_1, element_name_2,
