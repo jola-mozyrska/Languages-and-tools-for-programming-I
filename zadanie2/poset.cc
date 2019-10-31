@@ -1,7 +1,6 @@
 //  TODO: tests 3.
-//zwrotna
-// on students
 //  TODO: zmien ll na unsigned long
+// on students
 // komentarze
 #include <string>
 #include <iostream>
@@ -207,8 +206,9 @@ namespace jnp1 {
                       << "\", \""
                       << element_name_2 << "\")" << std::endl;
 
-        bool valid_value = check_value("poset_test", value1, "1") && check_value("poset_test", value2, "2");
-        if (!valid_value)
+        check_value("poset_test", value1, "1");
+        check_value("poset_test", value2, "2");
+        if (value1 == nullptr || value2 == nullptr)
             return false;
 
         if(!get_map_of_values_ids().count(element_name_1))
@@ -332,8 +332,9 @@ namespace jnp1 {
             safe_cerr() << "poset_add(" << id << ", \"" << element_name_1 << "\", \""
                       << element_name_2 << "\")" << std::endl;
 
-        bool valid_value = check_value("poset_add", value1, "1") && check_value("poset_add", value2, "2");
-        if (!valid_value)
+        check_value("poset_add", value1, "1");
+        check_value("poset_add", value2, "2");
+        if (value1 == nullptr || value2 == nullptr)
             return false;
 
         if (!check_existance("poset_add", id, element_name_1, element_name_2))
@@ -360,8 +361,9 @@ namespace jnp1 {
             safe_cerr() << "poset_del(" << id << ", \"" << element_name_1 << "\", \""
                       << element_name_2 << "\")" << std::endl;
 
-        bool valid_value = check_value("poset_del", value1, "1") && check_value("poset_del", value2, "2");
-        if (!valid_value)
+        check_value("poset_del", value1, "1");
+        check_value("poset_del", value2, "2");
+        if (value1 == nullptr || value2 == nullptr)
             return false;
 
         if (!check_existance("poset_del", id, element_name_1, element_name_2))
