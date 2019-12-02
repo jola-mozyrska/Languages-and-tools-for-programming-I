@@ -8,6 +8,23 @@ struct EmptyList {
 
 };
 
+// compile-time recursion
+template <int N>
+struct Fibonacci {
+    enum { value = Fibonacci<N-1>::value + Fibonacci<N-2>::value};
+};
+
+template<>
+struct Fibonacci<1> {
+    enum { value = 1 };
+};
+
+template<>
+struct Fibonacci<0> {
+    enum { value = 0 };
+};
+// compile-time recursion
+
 template<typename T>
 struct Fibin {
     template <typename E>
