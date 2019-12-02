@@ -1,5 +1,39 @@
 #ifndef PROJECT4_FIBIN_H
 #define PROJECT4_FIBIN_H
+
+
+constexpr int Fibo(uint I) {
+    return I;// TODO i-ta liczba Fibonacciego
+}
+
+template<>
+struct True {
+    static const int val = 1;
+};
+
+template<>
+struct False {
+    static const int val = 0;
+};
+
+template <uint I> //TODO może inny typ, żeby wszystkie uint, int64 itd wchodziły
+struct Fib {
+    static const int val = Fibo(I);
+};
+
+template <typename T>
+struct Lit {
+    static const int val = T::val;
+};
+
+
+template<typename T>
+class Fibin {
+    template<typename T2>
+    constexpr T eval() {T2();}
+};
+
+
 //
 //Literały Lit
 //Literałami liczbowymi mogą być tylko liczby Fibonacciego, np. Fib<0> = 0, Fib<1> = 1 itd.
