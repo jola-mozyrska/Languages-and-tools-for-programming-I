@@ -2,7 +2,10 @@
 #include <cstdint>
 #include <iostream>
 
-int main() {
+int main() {  
+    cout << Fibin<int64_t>::eval<Lit<Fib<1>>>();
+    
+    /*
     // Testing: lambda(x) {x + (Fib(1) + Fib(10)) + Fib(2)}(Fib(3))
     // Fib(0) = 0, Fib(1) = 1, Fib(2) = 1, Fib(3) = 2, Fib(10) = 55
     static_assert(59 == Fibin<uint64_t>::eval<Invoke<Lambda<Var("x"),
@@ -18,4 +21,5 @@ int main() {
     Fibin<const char*>::eval<Lit<Fib<0>>>();
 
     std::cout << "Fibin works fine!" << std::endl;
+    */
 }
