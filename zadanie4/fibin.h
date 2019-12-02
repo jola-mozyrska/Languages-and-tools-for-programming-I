@@ -1,75 +1,52 @@
 #ifndef PROJECT4_FIBIN_H
 #define PROJECT4_FIBIN_H
 
-template<typename T1>
-class Fibin {
-    // static List
+#include <iostream>
+#include "fibin.h"
 
-    template<typename T2>
+struct EmptyList {
 
+};
 
-    template <typename T>
-    constexpr int eval() {}
-
-    template <Lit<typename T>>
-    constexpr int eval() {
-
-    }
-
-    struct Var {
-        const char *name;
-        Var(const char *N): name(N) {}
-    };
-
-    template <Ref<typename T>>
-    constexpr int eval() {}
-
-    template <Let<Var V, typename Val, typename E>>
-    constexpr int eval() {
-        return Let<V::name, Val, E>.fun();
-        //Let<V::name, Val, E, Environment>.fun();
+template<typename T>
+struct Fibin {
+    template <typename E>
+    static constexpr T eval() {
+        return E::template eval<T, EmptyList>::val; // TODO pusta lista
     }
 };
 
-template <const char* N, typename Val, typename E>//, List Env>
-struct Let {
-    constexpr int fun() {return 1;}
-
-    // Env.append(
+template <typename T, T i>
+struct Value {
+    constexpr static T val = i;
 };
 
 /*
-class VarClass {
-    const char* name;
-    auto val;
+constexpr uint32_t Var() {
 
-    VarClass(const char* name): name(name) {}
-
-    template<typename T>
-    void set(T t) const{
-        val = t;
-    }
 }*/
 
+template <typename ValueType>
+constexpr ValueType Fibo(unsigned I) {
+    return I; // TODO i-ta liczba fibonacciego
+}
 
-template <const char *N>
-struct Ref {
-    template <typename T>
-    struct {
-        static T val;
-    };
-/*
-    constexpr static int get() const {return val;}
-
-    constexpr static void set(T v) {val = v;}
-*/
+template <unsigned I>
+struct Fib {
+    template <typename ValueType>
+    using eval = Value<ValueType, Fibo<ValueType>(I)>;
 };
 
-template <int I, typename T t, typename E>
-class Let {
-    constexpr static E fun() {
-        E<Ref<I, T>::val = t > result;
-    }
-}
+template <typename V>
+struct Lit {
+    template <typename ValueType, typename List>
+    using eval = typename V::template eval<ValueType>;
+};
+
+template <uint32_t var, typename V, typename E>
+struct Let {
+    template <typename ValueType, typename List>
+    using eval = typename E::template eval<ValueType, List>; // TODO zrobić liste i dodać do niej var tutaj
+};
 
 #endif //PROJECT4_FIBIN_H
