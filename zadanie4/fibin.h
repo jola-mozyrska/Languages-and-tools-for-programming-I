@@ -1,5 +1,7 @@
 #ifndef PROJECT4_FIBIN_H
 #define PROJECT4_FIBIN_H
+#include <iostream>
+
 struct EmptyList {
 
 };
@@ -17,10 +19,16 @@ struct Value {
     constexpr static T val = i;
 };
 
-/*
-constexpr uint32_t Var() {
 
-}*/
+constexpr uint32_t Var(const char *N) {
+    return N[0]; // TODO funkcja hashująca
+}
+
+template <uint32_t I>
+struct Ref {
+    template <typename ValueType, typename List>
+    using eval = Value<ValueType, I>; // TODO znajdowanie w liście wartości
+};
 
 template <unsigned I>
 struct Fib {
@@ -61,6 +69,48 @@ template <typename V>
 struct Lit {
     template <typename ValueType, typename List>
     using eval = typename V::template eval<ValueType, List>;
+};
+
+
+/**************************************************************************/
+/** LET **/
+/**************************************************************************/
+
+template <uint32_t var, typename V, typename E>
+struct Let {
+    template <typename ValueType, typename List>
+    using eval = typename E::template eval<ValueType, List>; // TODO zrobić liste i dodać do niej var tutaj
+};
+
+/**************************************************************************/
+/** Operacje arytmetyczne **/
+/**************************************************************************/
+
+template <typename T>
+struct Inc1 {
+    template <typename ValueType, typename List>
+    using eval = Value<ValueType, ValueType(T::template eval<ValueType, List>::val + 1)>;
+};
+
+template <typename T>
+struct Inc10 {
+    template <typename ValueType, typename List>
+    using eval = Value<ValueType, ValueType(T::template eval<ValueType, List>::val + Fib<10>::template eval<ValueType,List>::val)>;
+};
+
+template <typename... T>
+struct Sum {};
+
+template <typename T1, typename... T2>
+struct Sum<T1, T2...> {
+    template <typename ValueType, typename List>
+    using eval = Value<ValueType, (T1::template eval<ValueType, List>::val + Sum<T2...>::template eval<ValueType, List>::val)>;
+};
+
+template <>
+struct Sum<> {
+    template <typename ValueType, typename List>
+    using eval = Value<ValueType, 0>;
 };
 
 /**************************************************************************/
@@ -108,17 +158,11 @@ struct If {
     using eval = typename CheckIf<typename C::template eval<ValueType, List>, Then, Else>::template eval<ValueType, List>;
 };
 
-
-/**************************************************************************/
-/** LET **/
-/**************************************************************************/
-
-template <uint32_t var, typename V, typename E>
-struct Let {
+template <uint32_t I, typename T>
+struct Lambda {
     template <typename ValueType, typename List>
-    using eval = typename E::template eval<ValueType, List>; // TODO zrobić liste i dodać do niej var tutaj
+    using eval = decltype([] {T::template eval<ValueType, List>;}); // TODO tutaj jakoś dodać to I
 };
-
 
 
 #endif //PROJECT4_FIBIN_H
