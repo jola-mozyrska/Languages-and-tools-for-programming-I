@@ -3,27 +3,9 @@
 
 #include <iostream>
 #include "fibin.h"
-
 struct EmptyList {
 
 };
-
-// compile-time recursion
-template <int N>
-struct Fibonacci {
-    enum { value = Fibonacci<N-1>::value + Fibonacci<N-2>::value};
-};
-
-template<>
-struct Fibonacci<1> {
-    enum { value = 1 };
-};
-
-template<>
-struct Fibonacci<0> {
-    enum { value = 0 };
-};
-// compile-time recursion
 
 template<typename T>
 struct Fibin {
@@ -43,15 +25,22 @@ constexpr uint32_t Var() {
 
 }*/
 
-template <typename ValueType>
-constexpr ValueType Fibo(unsigned I) {
-    return I; // TODO i-ta liczba fibonacciego
-}
-
 template <unsigned I>
 struct Fib {
     template <typename ValueType>
-    using eval = Value<ValueType, Fibo<ValueType>(I)>;
+    using eval = Value<ValueType, ValueType(Fib<I-1>::template eval<ValueType>::val + Fib<I-2>::template eval<ValueType>::val)>;
+};
+
+template<>
+struct Fib<0> {
+    template <typename ValueType>
+    using eval = Value<ValueType, 0>;
+};
+
+template<>
+struct Fib<1> {
+    template <typename ValueType>
+    using eval = Value<ValueType, 1>;
 };
 
 template <typename V>
