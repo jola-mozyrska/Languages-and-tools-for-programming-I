@@ -2,33 +2,50 @@
 #define PROJECT4_FIBIN_H
 #include <iostream>
 
-struct EmptyList {
+template <typename T, T i>
+struct Value {
+    constexpr static T val = i;
+};
 
+struct EmptyList {};
+
+template <uint32_t I, typename V, typename Tail=EmptyList>
+struct _List {
+    using tail = Tail;
+};
+
+template <uint32_t I, typename List>
+struct Find {
+    using result = typename Find<I, typename List::tail>::result;
+};
+
+template <uint32_t I, typename Value, typename Tail>
+struct Find<I, _List<I, Value, Tail>> {
+    using result =  Value;
+};
+
+constexpr uint32_t Var(const char *N) {
+    return static_cast<uint32_t >(N[0]); // TODO funkcja hashująca
+}
+
+template <uint32_t I>
+struct Ref {
+    template <typename ValueType, typename List>
+    using eval = typename Find<I, List>::result;
 };
 
 template<typename T>
 struct Fibin {
     template <typename E>
     static constexpr T eval() {
-        return E::template eval<T, EmptyList>::val; // TODO pusta lista
+        return E::template eval<T, EmptyList>::val;
     }
 };
 
-template <typename T, T i>
-struct Value {
-    constexpr static T val = i;
-};
 
-
-constexpr uint32_t Var(const char *N) {
-    return N[0]; // TODO funkcja hashująca
-}
-
-template <uint32_t I>
-struct Ref {
-    template <typename ValueType, typename List>
-    using eval = Value<ValueType, I>; // TODO znajdowanie w liście wartości
-};
+/**************************************************************************/
+/** Fib, Lit, Bool **/
+/**************************************************************************/
 
 template <unsigned I>
 struct Fib {
@@ -79,7 +96,7 @@ struct Lit {
 template <uint32_t var, typename V, typename E>
 struct Let {
     template <typename ValueType, typename List>
-    using eval = typename E::template eval<ValueType, List>; // TODO zrobić liste i dodać do niej var tutaj
+    using eval = typename E::template eval<ValueType, _List<var, typename V::template eval<ValueType, List>, List>>;
 };
 
 /**************************************************************************/
@@ -118,13 +135,13 @@ struct Sum<> {
 /**************************************************************************/
 
 template <typename T1, typename T2>
-struct CheckEq{
+struct _Eq{
     template <typename ValueType, typename List>
     using eval = Bool<false>;
 };
 
 template <typename T>
-struct CheckEq<T, T>{
+struct _Eq<T, T>{
     template <typename ValueType, typename List>
     using eval = Bool<true>;
 };
@@ -132,7 +149,7 @@ struct CheckEq<T, T>{
 template <typename E1, typename E2> // TODO może powinno być eval<>::val - zmienić jak coś przy testowaniu
 struct Eq {
     template <typename ValueType, typename List>
-    using eval = typename CheckEq<typename E1::template eval<ValueType, List>,
+    using eval = typename _Eq<typename E1::template eval<ValueType, List>,
             typename E2::template eval<ValueType, List>>::template eval<ValueType, List>;
 };
 
@@ -141,13 +158,13 @@ struct Eq {
 /**************************************************************************/
 
 template <bool B, typename Then, typename Else>
-struct CheckIf {
+struct _If {
     template <typename ValueType, typename List>
     using eval = typename Else::template eval<ValueType, List>;
 };
 
 template <typename Then, typename Else>
-struct CheckIf<true, Then, Else> {
+struct _If<true, Then, Else> {
     template <typename ValueType, typename List>
     using eval = typename Then::template eval<ValueType, List>;
 };
@@ -155,13 +172,22 @@ struct CheckIf<true, Then, Else> {
 template <typename C, typename Then, typename Else>
 struct If {
     template <typename ValueType, typename List>
-    using eval = typename CheckIf<C::template eval<ValueType, List>::val, Then, Else>::template eval<ValueType, List>;
+    using eval = typename _If<C::template eval<ValueType, List>::val, Then, Else>::template eval<ValueType, List>;
 };
 
-template <uint32_t I, typename T>
-struct Lambda {
+template <uint32_t I, typename Body>
+struct Lambda {};
+
+template <typename Body, typename Param>
+struct Invoke {
     template <typename ValueType, typename List>
-    using eval = decltype([] {T::template eval<ValueType, List>;}); // TODO tutaj jakoś dodać to I
+    using eval = typename Invoke<typename Body::template eval<ValueType, List>, Param>::template eval<ValueType, List>;
+};
+
+template <uint32_t I, typename Body, typename Param>
+struct Invoke<Lambda<I, Body>, Param> {
+    template <typename ValueType, typename List>
+    using eval = typename Body::template eval<ValueType, _List<I, typename Param::template eval<ValueType, List>, List>>;
 };
 
 #endif //PROJECT4_FIBIN_H
