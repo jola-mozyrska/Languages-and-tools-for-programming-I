@@ -3,8 +3,6 @@
 #include <iostream>
 
 int main() {  
-    cout << Fibin<int64_t>::eval<Lit<Fib<1>>>();
-    
     static_assert(Fibin<uint64_t>::eval<Lit<Fib<12>>>() == 144);
     static_assert(Fibin<uint16_t>::eval<Lit<Fib<25>>>() == 9489);
     static_assert(Fibin<bool>::eval<Lit<True>>);
@@ -16,14 +14,28 @@ int main() {
     static_assert(Fibin<uint32_t>::eval<Inc10<Lit<Fib<3>>>>() == 57);
     static_assert(Fibin<uint32_t>::eval<Sum<Lit<Fib<0>>, Lit<Fib<1>>, Inc10<Lit<Fib<3>>>>>() == 58);
 
-    static_assert(Fibin<uint32_t>::eval<Ref<Var("a")>>() == 'a');
+    static_assert(Fibin<uint32_t>::eval<Let<Var("A"), Lit<Fib<1>>, Ref<Var("A")>>>() == 1);
+    static_assert(Fibin<uint32_t>::eval<Let<Var("A"), Let<Var("A"), Lit<Fib<3>>, Ref<Var("A")>>, Ref<Var("A")>>>() == 2);
 
     static_assert(Fibin<uint64_t>::eval<Eq<Lit<Fib<0>>, Lit<Fib<1>>>>() == 0);
     static_assert(Fibin<uint64_t>::eval<Eq<Lit<Fib<0>>, Lit<True>>>() == 0);
     static_assert(Fibin<uint64_t>::eval<Eq<Lit<Fib<0>>, Lit<False>>>() == 0);
     static_assert(Fibin<uint64_t>::eval<Eq<Lit<Fib<1>>, Lit<Fib<2>>>>() == 1);
     static_assert(Fibin<uint64_t>::eval<Eq<Lit<Fib<15>>, Lit<Fib<2>>>>() == 0);
-    static_assert(Fibin<uint64_t>::eval<Eq<If<Lit<True>, Lit<Fib<1>>, Lit<Fib<0>>>, Lit<Fib<1>>>>);
+
+    static_assert(Fibin<uint64_t>::eval<Invoke<Lambda<Var("x"), Ref<Var("x")>>, Lit<Fib<0>>>>() == 0);
+    static_assert(Fibin<uint64_t>::eval<Invoke<Lambda<Var("x"), Ref<Var("x")>>, Lit<Fib<3>>>>() == 2);
+
+
+    static_assert(Fibin<uint64_t>::eval<Eq<If<Lit<True>, Lit<Fib<1>>, Lit<Fib<0>>>, Lit<Fib<1>>>>());
+    static_assert(Fibin<uint64_t>::eval<Eq<If<Lit<False>, Lit<Fib<1>>, Lit<Fib<0>>>, Lit<Fib<0>>>>());
+
+    // Błędy kompilacji:
+    /*static_assert(Fibin<uint64_t>::eval<Eq<If<False, Lit<Fib<1>>, Lit<Fib<0>>>, Lit<Fib<0>>>>());
+    static_assert(Fibin<uint64_t>::eval<Eq<If<True, Lit<Fib<1>>, Lit<Fib<0>>>, Lit<Fib<1>>>>());
+    static_assert(Fibin<uint64_t>::eval<Eq<If<Lit<Fib<1>>, Lit<Fib<1>>, Lit<Fib<0>>>, Lit<Fib<1>>>>());
+*/
+    static_assert((int)Fibin<char>::eval<Sum<Lit<Fib<11>>,Lit<Fib<11>>,Lit<Fib<11>>,Lit<Fib<11>>,Lit<Fib<11>>>>() == -67);
 
     
     /*
