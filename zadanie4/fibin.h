@@ -37,7 +37,8 @@ struct Ref {
 
 template<typename T>
 struct Fibin {
-    template <typename E>
+    template <typename E,
+            typename std::enable_if<std::is_arithmetic<E>::value, E>::type>
     static constexpr T eval() {
         return E::template eval<T, EmptyList>::val;
     }
