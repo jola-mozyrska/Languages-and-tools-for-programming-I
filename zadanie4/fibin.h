@@ -32,21 +32,21 @@ struct Ref {
 
 template <unsigned I>
 struct Fib {
-    template <typename ValueType, typename List>
+    template <typename ValueType>
     using eval = Value<ValueType,
-                ValueType(Fib<I-1>::template eval<ValueType,
-                    List>::val + Fib<I-2>::template eval<ValueType, List>::val)>;
+                static_cast<ValueType>(Fib<I-1>::template eval<ValueType
+                    >::val + Fib<I-2>::template eval<ValueType>::val)>;
 };
 
 template<>
 struct Fib<0> {
-    template <typename ValueType, typename List>
+    template <typename ValueType>
     using eval = Value<ValueType, 0>;
 };
 
 template<>
 struct Fib<1> {
-    template <typename ValueType, typename List>
+    template <typename ValueType>
     using eval = Value<ValueType, 1>;
 };
 
@@ -56,19 +56,19 @@ struct Bool {
 };
 
 struct True {
-    template <typename ValueType, typename List>
+    template <typename ValueType>
     using eval = Bool<true>;
 };
 
 struct False{
-    template <typename ValueType, typename List>
+    template <typename ValueType>
     using eval = Bool<false>;
 };
 
 template <typename V>
 struct Lit {
     template <typename ValueType, typename List>
-    using eval = typename V::template eval<ValueType, List>;
+    using eval = typename V::template eval<ValueType>;
 };
 
 
@@ -89,13 +89,13 @@ struct Let {
 template <typename T>
 struct Inc1 {
     template <typename ValueType, typename List>
-    using eval = Value<ValueType, ValueType(T::template eval<ValueType, List>::val + 1)>;
+    using eval = Value<ValueType, static_cast<ValueType>(T::template eval<ValueType, List>::val + Fib<1>::template eval<ValueType>::val)>;
 };
 
 template <typename T>
 struct Inc10 {
     template <typename ValueType, typename List>
-    using eval = Value<ValueType, ValueType(T::template eval<ValueType, List>::val + Fib<10>::template eval<ValueType,List>::val)>;
+    using eval = Value<ValueType, static_cast<ValueType>(T::template eval<ValueType, List>::val + Fib<10>::template eval<ValueType>::val)>;
 };
 
 template <typename... T>
@@ -104,7 +104,7 @@ struct Sum {};
 template <typename T1, typename... T2>
 struct Sum<T1, T2...> {
     template <typename ValueType, typename List>
-    using eval = Value<ValueType, (T1::template eval<ValueType, List>::val + Sum<T2...>::template eval<ValueType, List>::val)>;
+    using eval = Value<ValueType, static_cast<ValueType>(T1::template eval<ValueType, List>::val + Sum<T2...>::template eval<ValueType, List>::val)>;
 };
 
 template <>
@@ -120,16 +120,16 @@ struct Sum<> {
 template <typename T1, typename T2>
 struct CheckEq{
     template <typename ValueType, typename List>
-    using eval = typename False::template eval<ValueType, List>;
+    using eval = Bool<false>;
 };
 
 template <typename T>
 struct CheckEq<T, T>{
     template <typename ValueType, typename List>
-    using eval = typename True::template eval<ValueType, List>;
+    using eval = Bool<true>;
 };
 
-template <typename E1, typename E2>
+template <typename E1, typename E2> // TODO może powinno być eval<>::val - zmienić jak coś przy testowaniu
 struct Eq {
     template <typename ValueType, typename List>
     using eval = typename CheckEq<typename E1::template eval<ValueType, List>,
@@ -140,14 +140,14 @@ struct Eq {
 /** IF **/
 /**************************************************************************/
 
-template <typename T, typename Then, typename Else>
+template <bool B, typename Then, typename Else>
 struct CheckIf {
     template <typename ValueType, typename List>
     using eval = typename Else::template eval<ValueType, List>;
 };
 
 template <typename Then, typename Else>
-struct CheckIf<Bool<true>, Then, Else> {
+struct CheckIf<true, Then, Else> {
     template <typename ValueType, typename List>
     using eval = typename Then::template eval<ValueType, List>;
 };
@@ -155,7 +155,7 @@ struct CheckIf<Bool<true>, Then, Else> {
 template <typename C, typename Then, typename Else>
 struct If {
     template <typename ValueType, typename List>
-    using eval = typename CheckIf<typename C::template eval<ValueType, List>, Then, Else>::template eval<ValueType, List>;
+    using eval = typename CheckIf<C::template eval<ValueType, List>::val, Then, Else>::template eval<ValueType, List>;
 };
 
 template <uint32_t I, typename T>
@@ -163,6 +163,5 @@ struct Lambda {
     template <typename ValueType, typename List>
     using eval = decltype([] {T::template eval<ValueType, List>;}); // TODO tutaj jakoś dodać to I
 };
-
 
 #endif //PROJECT4_FIBIN_H
