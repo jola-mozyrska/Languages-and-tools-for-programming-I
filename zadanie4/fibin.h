@@ -1,5 +1,6 @@
-#ifndef PROJECT4_FIBIN_H
-#define PROJECT4_FIBIN_H
+#ifndef FIBIN_FIBIN_H
+#define FIBIN_FIBIN_H
+
 #include <iostream>
 
 template <typename T, T i>
@@ -25,7 +26,7 @@ struct Find<I, _List<I, Value, Tail>> {
 };
 
 constexpr uint32_t Var(const char *N) {
-    return static_cast<uint32_t >(N[0]); // TODO funkcja hashująca
+    return static_cast<uint32_t >(('A' <= N[0] && N[0] <= 'Z') ? N[0] - 'A' + 'a' : N[0]); // TODO funkcja hashująca
 }
 
 template <uint32_t I>
@@ -47,25 +48,27 @@ struct Fibin {
 /** Fib, Lit, Bool **/
 /**************************************************************************/
 
+template <unsigned I, typename ValueType>
+struct _Fib {
+    static constexpr ValueType val = static_cast<ValueType>(_Fib<I-1, ValueType>::val + _Fib<I-2, ValueType>::val);
+};
+
+template <typename ValueType>
+struct _Fib<0, ValueType> {
+    static constexpr ValueType val = static_cast<ValueType>(0);
+};
+
+template <typename ValueType>
+struct _Fib<1, ValueType> {
+    static constexpr ValueType val = static_cast<ValueType>(1);
+};
+
 template <unsigned I>
 struct Fib {
     template <typename ValueType>
-    using eval = Value<ValueType,
-                static_cast<ValueType>(Fib<I-1>::template eval<ValueType
-                    >::val + Fib<I-2>::template eval<ValueType>::val)>;
+    using eval = Value<ValueType, _Fib<I, ValueType>::val>;
 };
 
-template<>
-struct Fib<0> {
-    template <typename ValueType>
-    using eval = Value<ValueType, 0>;
-};
-
-template<>
-struct Fib<1> {
-    template <typename ValueType>
-    using eval = Value<ValueType, 1>;
-};
 
 template <bool B>
 struct Bool {
@@ -190,4 +193,4 @@ struct Invoke<Lambda<I, Body>, Param> {
     using eval = typename Body::template eval<ValueType, _List<I, typename Param::template eval<ValueType, List>, List>>;
 };
 
-#endif //PROJECT4_FIBIN_H
+#endif //FIBIN_FIBIN_H
