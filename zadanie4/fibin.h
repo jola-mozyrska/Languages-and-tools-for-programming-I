@@ -27,9 +27,9 @@ struct Find<I, _List<I, Value, Tail>> {
     using result =  Value;
 };
 
-constexpr uint32_t Var(const char *N) {
+constexpr uint64_t Var(const char *N) {
     int i = 0;
-    uint32_t hash = 0;
+    uint64_t hash = 0;
     const uint32_t BASE = 41;
     while (N[i] != '\0') {
         hash *= BASE;
