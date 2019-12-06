@@ -1,4 +1,5 @@
 //  TO DO: clousure, sum 2 el, find in list
+//  TO DO: change list to int64
 
 #ifndef FIBIN_FIBIN_H
 #define FIBIN_FIBIN_H
@@ -30,7 +31,7 @@ struct Find<I, _List<I, Value, Tail>> {
 constexpr uint64_t Var(const char *N) {
     int i = 0;
     uint64_t hash = 0;
-    const uint32_t BASE = 41;
+    const uint64_t BASE = 100;
     while (N[i] != '\0') {
         hash *= BASE;
         hash += static_cast<uint32_t>(('A' <= N[i] && N[i] <= 'Z') ? N[i] - 'A' + 'a' :
