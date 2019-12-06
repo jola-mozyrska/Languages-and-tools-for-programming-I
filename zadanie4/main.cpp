@@ -2,7 +2,10 @@
 #include <cstdint>
 #include <iostream>
 
-int main() {  
+int main() {
+    static_assert(Fibin<uint32_t>::eval<Let<Var("A"), Lit<Fib<1>>, Ref<Var("A")>>>() == 1);
+
+
     static_assert(Fibin<uint64_t>::eval<Lit<Fib<12>>>() == 144);
     static_assert(Fibin<uint16_t>::eval<Lit<Fib<25>>>() == 9489);
     static_assert(Fibin<bool>::eval<Lit<True>>);

@@ -1,3 +1,5 @@
+//  TO DO: clousure, sum 2 el, find in list
+
 #ifndef FIBIN_FIBIN_H
 #define FIBIN_FIBIN_H
 
@@ -26,7 +28,18 @@ struct Find<I, _List<I, Value, Tail>> {
 };
 
 constexpr uint32_t Var(const char *N) {
-    return static_cast<uint32_t >(('A' <= N[0] && N[0] <= 'Z') ? N[0] - 'A' + 'a' : N[0]); // TODO funkcja hashująca
+    int i = 0;
+    uint32_t hash = 0;
+    const uint32_t BASE = 41;
+    while (N[i] != '\0') {
+        hash *= BASE;
+        hash += static_cast<uint32_t>(('A' <= N[i] && N[i] <= 'Z') ? N[i] - 'A' + 'a' :
+                               (('a' <= N[i] && N[i] <= 'z') ? N[i] :
+                                (('0' <= N[i] && N[i] <= '9') ? N[i] : -1)));
+        ++i;
+    }
+
+    return hash;
 }
 
 template <uint32_t I>
@@ -37,8 +50,9 @@ struct Ref {
 
 template<typename T>
 struct Fibin {
-    template <typename E,
-            typename std::enable_if<std::is_arithmetic<E>::value, E>::type>
+//    template <typename E,
+//            typename std::enable_if<std::is_arithmetic<E>::value, E>::type>
+    template<typename E>
     static constexpr T eval() {
         return E::template eval<T, EmptyList>::val;
     }
