@@ -17,6 +17,10 @@ int main() {
     static_assert(Fibin<uint32_t>::eval<Inc10<Lit<Fib<3>>>>() == 57);
     static_assert(Fibin<uint32_t>::eval<Sum<Lit<Fib<0>>, Lit<Fib<1>>, Inc10<Lit<Fib<3>>>>>() == 58);
 
+    static_assert(Fibin<uint32_t>::eval<Sum<Lit<Fib<0>>, Lit<Fib<0>> >>() == 0);
+//    static_assert(Fibin<uint32_t>::eval<Sum<Lit<Fib<0>> >>() == 0); //  shouldn't compile
+//    static_assert(Fibin<uint32_t>::eval<Sum< >>() == 0); //  shouldn't compile
+
     static_assert(Fibin<uint32_t>::eval<Let<Var("A"), Lit<Fib<1>>, Ref<Var("A")>>>() == 1);
     static_assert(Fibin<uint32_t>::eval<Let<Var("A"), Let<Var("A"), Lit<Fib<3>>, Ref<Var("A")>>, Ref<Var("A")>>>() == 2);
 

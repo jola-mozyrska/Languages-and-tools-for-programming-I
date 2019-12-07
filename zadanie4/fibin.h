@@ -1,5 +1,6 @@
-//  TO DO: clousure, sum 2 el, find in list
-//  TO DO: change list to int64
+//  TODO: closure, sum 2 el, find in list
+//  TODO: change list to int64
+//  TODO: everything is public, we have to hide it
 
 #ifndef FIBIN_FIBIN_H
 #define FIBIN_FIBIN_H
@@ -139,14 +140,16 @@ struct Sum {};
 
 template <typename T1, typename... T2>
 struct Sum<T1, T2...> {
+    static_assert((sizeof...(T2) > 1));
+
     template <typename ValueType, typename List>
     using eval = Value<ValueType, static_cast<ValueType>(T1::template eval<ValueType, List>::val + Sum<T2...>::template eval<ValueType, List>::val)>;
 };
 
-template <>
-struct Sum<> {
+template <typename T1, typename T2>
+struct Sum<T1, T2> {
     template <typename ValueType, typename List>
-    using eval = Value<ValueType, 0>;
+    using eval = Value<ValueType, static_cast<ValueType>(T1::template eval<ValueType, List>::val + T2::template eval<ValueType, List>::val)>;
 };
 
 /**************************************************************************/
