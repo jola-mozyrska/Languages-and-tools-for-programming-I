@@ -14,17 +14,17 @@ struct Value {
 
 struct EmptyList;
 
-template <uint32_t I, typename V, typename Tail=EmptyList>
+template <uint64_t I, typename V, typename Tail=EmptyList>
 struct _List {
     using tail = Tail;
 };
 
-template <uint32_t I, typename List>
+template <uint64_t I, typename List>
 struct Find {
     using result = typename Find<I, typename List::tail>::result;
 };
 
-template <uint32_t I, typename Value, typename Tail>
+template <uint64_t I, typename Value, typename Tail>
 struct Find<I, _List<I, Value, Tail>> {
     using result =  Value;
 };
@@ -35,7 +35,7 @@ constexpr uint64_t Var(const char *N) {
     const uint64_t BASE = 100;
     while (N[i] != '\0') {
         hash *= BASE;
-        hash += static_cast<uint32_t>(('A' <= N[i] && N[i] <= 'Z') ? N[i] - 'A' + 'a' :
+        hash += static_cast<uint64_t>(('A' <= N[i] && N[i] <= 'Z') ? N[i] - 'A' + 'a' :
                                (('a' <= N[i] && N[i] <= 'z') ? N[i] :
                                 (('0' <= N[i] && N[i] <= '9') ? N[i] : -1)));
         ++i;
@@ -44,7 +44,7 @@ constexpr uint64_t Var(const char *N) {
     return hash;
 }
 
-template <uint32_t I>
+template <uint64_t I>
 struct Ref {
     template <typename ValueType, typename List>
     using eval = typename Find<I, List>::result;
@@ -113,7 +113,7 @@ struct Lit {
 /** LET **/
 /**************************************************************************/
 
-template <uint32_t var, typename V, typename E>
+template <uint64_t var, typename V, typename E>
 struct Let {
     template <typename ValueType, typename List>
     using eval = typename E::template eval<ValueType, _List<var, typename V::template eval<ValueType, List>, List>>;
@@ -197,7 +197,7 @@ struct If {
     using eval = typename _If<C::template eval<ValueType, List>::val, Then, Else>::template eval<ValueType, List>;
 };
 
-template <uint32_t I, typename Body>
+template <uint64_t I, typename Body>
 struct Lambda {};
 
 template <typename Body, typename Param>
@@ -206,7 +206,7 @@ struct Invoke {
     using eval = typename Invoke<typename Body::template eval<ValueType, List>, Param>::template eval<ValueType, List>;
 };
 
-template <uint32_t I, typename Body, typename Param>
+template <uint64_t I, typename Body, typename Param>
 struct Invoke<Lambda<I, Body>, Param> {
     template <typename ValueType, typename List>
     using eval = typename Body::template eval<ValueType, _List<I, typename Param::template eval<ValueType, List>, List>>;
