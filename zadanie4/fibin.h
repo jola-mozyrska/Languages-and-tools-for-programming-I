@@ -1,4 +1,3 @@
-//  TODO: closure
 //  TODO: enable_if
 //  TODO: everything is public, we may want to hide it in namespace
 
