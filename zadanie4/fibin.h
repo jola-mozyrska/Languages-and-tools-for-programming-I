@@ -1,4 +1,5 @@
-//  TODO: enable_if - dokończyć
+//  TODO: enable_if - chyba już działa
+//  TODO: jeszcze sprawdzić Lambde
 //  TODO: everything is public, we may want to hide it in namespace
 
 #ifndef FIBIN_FIBIN_H
@@ -55,9 +56,14 @@ struct Ref {
 
 template<typename T>
 struct Fibin {
-    template <typename E>
-    static constexpr typename std::enable_if<std::is_integral<T>::value, T>::type eval() {
+    template <typename E, typename X = T, std::enable_if_t<std::is_integral<X>::value, int> = 0>
+    static constexpr T eval() {
         return E::template eval<T, EmptyList>::val;
+    }
+
+    template <typename E, typename X = T, std::enable_if_t<!std::is_integral<X>::value, int> = 0>
+    static constexpr void eval() {
+        std::cout << "Fibin doesn't support: PKc" << std::endl;
     }
 };
 
@@ -195,13 +201,16 @@ struct If {
     using eval = typename _If<C::template eval<ValueType, List>::val, Then, Else>::template eval<ValueType, List>;
 };
 
-template <uint64_t I, typename Body>
-struct Lambda {};
+template <uint64_t I, typename Body, typename... L>
+struct Lambda {
+    template <typename ValueType, typename List>
+    using eval = Lambda<I, Body, List>;
+};
 
-template <typename Body, typename Param>
+template <typename Fun, typename Param>
 struct Invoke {
     template <typename ValueType, typename List>
-    using eval = typename Invoke<typename Body::template eval<ValueType, List>, Param>::template eval<ValueType, List>;
+    using eval = typename Invoke<typename Fun::template eval<ValueType, List>, Param>::template eval<ValueType, List>;
 };
 
 template <uint64_t I, typename Body, typename Param>
@@ -209,6 +218,13 @@ struct Invoke<Lambda<I, Body>, Param> {
     static_assert(I > 0);
     template <typename ValueType, typename List>
     using eval = typename Body::template eval<ValueType, _List<I, typename Param::template eval<ValueType, List>, List>>;
+};
+
+template <uint64_t I, typename Body, typename L, typename Param>
+struct Invoke<Lambda<I, Body, L>, Param> {
+    static_assert(I > 0);
+    template <typename ValueType, typename List>
+    using eval = typename Body::template eval<ValueType, _List<I, typename Param::template eval<ValueType, L>, L>>;
 };
 
 #endif //FIBIN_FIBIN_H
