@@ -1,5 +1,5 @@
 //  TODO: closure
-//  TODO: change list to int64, enable_if
+//  TODO: enable_if
 //  TODO: everything is public, we may want to hide it in namespace
 
 #ifndef FIBIN_FIBIN_H
