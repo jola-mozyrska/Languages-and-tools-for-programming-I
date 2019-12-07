@@ -1,4 +1,4 @@
-//  TODO: enable_if
+//  TODO: enable_if - dokończyć
 //  TODO: everything is public, we may want to hide it in namespace
 
 #ifndef FIBIN_FIBIN_H
@@ -29,14 +29,18 @@ struct Find<I, _List<I, Value, Tail>> {
 };
 
 constexpr uint64_t Var(const char *N) {
-    int i = 0;
+    size_t i = 0;
     uint64_t hash = 0;
+    uint64_t temp = 0;
     const uint64_t BASE = 100;
     while (N[i] != '\0') {
         hash *= BASE;
-        hash += static_cast<uint64_t>(('A' <= N[i] && N[i] <= 'Z') ? N[i] - 'A' + 'a' :
-                               (('a' <= N[i] && N[i] <= 'z') ? N[i] :
-                                (('0' <= N[i] && N[i] <= '9') ? N[i] : -1)));
+        temp = static_cast<int64_t>(('A' <= N[i] && N[i] <= 'Z') ? N[i] :
+                                    (('a' <= N[i] && N[i] <= 'z') ? N[i] - 'a' + 'A' :
+                                     (('0' <= N[i] && N[i] <= '9') ? N[i] : 0)));
+        if (temp == 0)
+            return 0;
+        hash += static_cast<uint64_t>(temp);
         ++i;
     }
 
@@ -51,10 +55,8 @@ struct Ref {
 
 template<typename T>
 struct Fibin {
-//    template <typename E,
-//            typename std::enable_if<std::is_arithmetic<E>::value, E>::type>
-    template<typename E>
-    static constexpr T eval() {
+    template <typename E>
+    static constexpr typename std::enable_if<std::is_integral<T>::value, T>::type eval() {
         return E::template eval<T, EmptyList>::val;
     }
 };
@@ -114,6 +116,8 @@ struct Lit {
 
 template <uint64_t var, typename V, typename E>
 struct Let {
+    static_assert(var > 0);
+
     template <typename ValueType, typename List>
     using eval = typename E::template eval<ValueType, _List<var, typename V::template eval<ValueType, List>, List>>;
 };
@@ -134,15 +138,10 @@ struct Inc10 {
     using eval = Value<ValueType, static_cast<ValueType>(T::template eval<ValueType, List>::val + Fib<10>::template eval<ValueType>::val)>;
 };
 
-template <typename... T>
-struct Sum {};
-
-template <typename T1, typename... T2>
-struct Sum<T1, T2...> {
-    static_assert((sizeof...(T2) > 1));
-
+template <typename T1, typename T2, typename... T3>
+struct Sum {
     template <typename ValueType, typename List>
-    using eval = Value<ValueType, static_cast<ValueType>(T1::template eval<ValueType, List>::val + Sum<T2...>::template eval<ValueType, List>::val)>;
+    using eval = Value<ValueType, static_cast<ValueType>(T1::template eval<ValueType, List>::val + Sum<T2, T3...>::template eval<ValueType, List>::val)>;
 };
 
 template <typename T1, typename T2>
@@ -207,6 +206,7 @@ struct Invoke {
 
 template <uint64_t I, typename Body, typename Param>
 struct Invoke<Lambda<I, Body>, Param> {
+    static_assert(I > 0);
     template <typename ValueType, typename List>
     using eval = typename Body::template eval<ValueType, _List<I, typename Param::template eval<ValueType, List>, List>>;
 };
