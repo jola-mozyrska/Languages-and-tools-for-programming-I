@@ -1,6 +1,6 @@
-//  TODO: closure, sum 2 el, find in list
-//  TODO: change list to int64
-//  TODO: everything is public, we have to hide it
+//  TODO: closure
+//  TODO: change list to int64, enable_if
+//  TODO: everything is public, we may want to hide it in namespace
 
 #ifndef FIBIN_FIBIN_H
 #define FIBIN_FIBIN_H
@@ -12,7 +12,7 @@ struct Value {
     constexpr static T val = i;
 };
 
-struct EmptyList {};
+struct EmptyList;
 
 template <uint32_t I, typename V, typename Tail=EmptyList>
 struct _List {

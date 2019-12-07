@@ -45,7 +45,7 @@ int main() {
     static_assert((int)Fibin<char>::eval<Sum<Lit<Fib<11>>,Lit<Fib<11>>,Lit<Fib<11>>,Lit<Fib<11>>,Lit<Fib<11>>>>() == -67);
 
     
-    /*
+
     // Testing: lambda(x) {x + (Fib(1) + Fib(10)) + Fib(2)}(Fib(3))
     // Fib(0) = 0, Fib(1) = 1, Fib(2) = 1, Fib(3) = 2, Fib(10) = 55
     static_assert(59 == Fibin<uint64_t>::eval<Invoke<Lambda<Var("x"),
@@ -60,6 +60,6 @@ int main() {
     // Prints out to std::cout: "Fibin doesn't support: PKc"
     Fibin<const char*>::eval<Lit<Fib<0>>>();
 
-    std::cout << "Fibin works fine!" << std::endl;
-    */
+//    std::cout << "Fibin works fine!" << std::endl;
+
 }
