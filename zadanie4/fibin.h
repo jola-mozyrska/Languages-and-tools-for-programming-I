@@ -1,5 +1,4 @@
-//  TODO: enable_if - chyba już działa
-//  TODO: jeszcze sprawdzić Lambde
+//  TODO: zmienić nazwę struktury _List bo jest niespójna z resztą nazw (Nazwa - zwykła struktura, _Nazwa - jakby wrapper tej struktury)
 //  TODO: everything is public, we may want to hide it in namespace
 
 #ifndef FIBIN_FIBIN_H
@@ -12,7 +11,7 @@ struct Value {
     constexpr static T val = i;
 };
 
-struct EmptyList;
+struct EmptyList{};
 
 template <uint64_t I, typename V, typename Tail=EmptyList>
 struct _List {
@@ -201,10 +200,13 @@ struct If {
     using eval = typename _If<C::template eval<ValueType, List>::val, Then, Else>::template eval<ValueType, List>;
 };
 
-template <uint64_t I, typename Body, typename... L>
+template <uint64_t I, typename Body, typename List>
+struct _Lambda {};
+
+template <uint64_t I, typename Body>
 struct Lambda {
     template <typename ValueType, typename List>
-    using eval = Lambda<I, Body, List>;
+    using eval = _Lambda<I, Body, List>;
 };
 
 template <typename Fun, typename Param>
@@ -213,18 +215,11 @@ struct Invoke {
     using eval = typename Invoke<typename Fun::template eval<ValueType, List>, Param>::template eval<ValueType, List>;
 };
 
-template <uint64_t I, typename Body, typename Param>
-struct Invoke<Lambda<I, Body>, Param> {
-    static_assert(I > 0);
-    template <typename ValueType, typename List>
-    using eval = typename Body::template eval<ValueType, _List<I, typename Param::template eval<ValueType, List>, List>>;
-};
-
 template <uint64_t I, typename Body, typename L, typename Param>
-struct Invoke<Lambda<I, Body, L>, Param> {
+struct Invoke<_Lambda<I, Body, L>, Param> {
     static_assert(I > 0);
     template <typename ValueType, typename List>
-    using eval = typename Body::template eval<ValueType, _List<I, typename Param::template eval<ValueType, L>, L>>;
+    using eval = typename Body::template eval<ValueType, _List<I, typename Param::template eval<ValueType, List>, L>>;
 };
 
 #endif //FIBIN_FIBIN_H
