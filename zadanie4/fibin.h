@@ -62,7 +62,7 @@ struct Fibin {
 
     template <typename E, typename X = T, std::enable_if_t<!std::is_integral<X>::value, int> = 0>
     static constexpr void eval() {
-        std::cout << "Fibin doesn't support: PKc" << std::endl;
+        std::cout << "Fibin doesn't support: " << typeid(T).name() << std::endl;
     }
 };
 
