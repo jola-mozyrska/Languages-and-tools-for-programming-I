@@ -3,7 +3,7 @@
 
 #include <iostream>
 
-namespace {
+namespace details {
 
     // Struktury możliwych przyjmowanych wartości
 
@@ -88,7 +88,7 @@ namespace {
             temp = static_cast<int64_t>(('A' <= N[i] && N[i] <= 'Z') ? N[i] :
                                         (('a' <= N[i] && N[i] <= 'z') ? N[i] - 'a' + 'A' :
                                          (('0' <= N[i] && N[i] <= '9') ? N[i] : 0)));
-            if (temp == 0)
+            if (temp == 0 || i >= 6)
                 return 0;
             hash += static_cast<uint64_t>(temp);
             ++i;
@@ -156,7 +156,7 @@ namespace {
         using eval = Bool<true>;
     };
 
-    template<typename Left, typename Right> // TODO może powinno być eval<>::val - zmienić jak coś przy testowaniu
+    template<typename Left, typename Right>
     struct Eq {
         template<typename ValueType, typename List>
         using eval = typename _Eq<typename Left::template eval<ValueType, List>,
@@ -205,11 +205,12 @@ namespace {
     };
 }
 
+
 template<typename T>
 struct Fibin {
     template <typename E, typename X = T, std::enable_if_t<std::is_integral<X>::value, int> = 0>
     static constexpr T eval() {
-        return E::template eval<T, EmptyList>::val;
+        return E::template eval<T, details::EmptyList>::val;
     }
 
     template <typename E, typename X = T, std::enable_if_t<!std::is_integral<X>::value, int> = 0>
