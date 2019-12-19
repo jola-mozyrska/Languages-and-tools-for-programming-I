@@ -18,17 +18,19 @@ namespace {
     };
 
     template <class K, class V>
-            class value_in_map {
-                const V value;
-                node<K>* node_in_list;
-            };
+    class value_in_map {
+        const V value;
+        node<K>* node_in_list;
+    };
 
+    class lookup_error{
+
+    };
 }
 
 template <class K, class V, class Hash = std::hash<K>>
 class insertion_ordered_map {
 private:
-    //hashed key -> {V, ptr to node}
     std::unordered_map<K, value_in_map<K, V>, Hash> elements;
 
 public:
@@ -48,8 +50,8 @@ public:
         iterator& operator++();
         bool operator==(iterator &other) const;
         bool operator!=(iterator &other) const;
-        node<K, V>* operator->() const;
-        node<K, V>& operator*() const;
+        node<K>* operator->() const;
+        node<K>& operator*() const;
     };
 
     iterator begin();
@@ -59,9 +61,10 @@ public:
 
 };
 
-class lookup_error{
+template <class K, class V, class Hash>
+insertion_ordered_map<K, V, Hash>::insertion_ordered_map() {
 
-};
+}
 
 
 
