@@ -2,11 +2,34 @@
 #define INSERTION_ORDERED_MAP_H
 
 #include <iostream>
+#include <unordered_map>
+
+namespace {
+    template <class K>
+    class node {
+    public:
+        const K key;
+
+        node(const K key, node<K> prev = nullptr,
+             node<K> next = nullptr) : key(key), prev(prev), next(next) {}
+    private:
+        node* next;
+        node* prev;
+    };
+
+    template <class K, class V>
+            class value_in_map {
+                const V value;
+                node<K>* node_in_list;
+            };
+
+}
 
 template <class K, class V, class Hash = std::hash<K>>
 class insertion_ordered_map {
 private:
-    std::unordered_set<K, Hash> elements;
+    //hashed key -> {V, ptr to node}
+    std::unordered_map<K, value_in_map<K, V>, Hash> elements;
 
 public:
     insertion_ordered_map();
