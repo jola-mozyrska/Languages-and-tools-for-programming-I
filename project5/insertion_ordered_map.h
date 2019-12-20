@@ -11,6 +11,13 @@ namespace {
     class value_in_map {
         const V value;
         typename std::list<K>::iterator node_iterator;
+
+    public:
+        value_in_map() = default;
+        value_in_map(V value, typename std::list<K>::iterator node_iterator) {
+            this->value = value;
+            this->node_iterator = node_iterator;
+        }
     };
 
     class lookup_error : std::exception {
@@ -26,7 +33,14 @@ private:
         Data();
         Data(Data const &other_data) {
             elements_map = {};
-            list_of_recent_keys = {};
+            for(auto it = other_data.elements_map.begin(); it != other_data.elements_map.end(); ++it) {
+                K key(it->first);
+                V value(it->second.value);
+                value_in_map value_in_map_cpy(value, nullptr);
+                elements_map[key] = value_in_map_cpy;
+            }
+
+//            list_of_recent_keys = std::list<K>(other_data.list_of_recent_keys);
         }
 
         std::unordered_map<K, value_in_map<K, V>, Hash> elements_map;
@@ -40,7 +54,7 @@ public:
     ~insertion_ordered_map() noexcept;
     insertion_ordered_map(insertion_ordered_map const &other);
     insertion_ordered_map(insertion_ordered_map &&other) noexcept;
-    insertion_ordered_map &operator=(insertion_ordered_map other);
+    insertion_ordered_map &operator=(insertion_ordered_map other) noexcept;
 
 
     bool insert(K const &k, V const &v);
@@ -65,11 +79,41 @@ public:
 //  constructors
 template <class K, class V, class Hash>
 insertion_ordered_map<K, V, Hash>::insertion_ordered_map() {
-    data->list_of_recent_keys = std::make_shared<std::list<K>>(new std::list<K>);
+    data->list_of_recent_keys = std::make_shared<std::list<K>>(std::list<K>());
 
     std::unordered_map<K, value_in_map<K, V>, Hash> m = {};
-    data->elements_map = std::make_shared<std::unordered_map<K, value_in_map<K, V>, Hash>>(&m);
+    data->elements_map = std::make_shared<std::unordered_map<K, value_in_map<K, V>, Hash>>(m);
 }
+
+template <class K, class V, class Hash>
+insertion_ordered_map<K, V, Hash>::insertion_ordered_map(insertion_ordered_map const &other) {
+    //  TODO: should it throw except instead of return?
+    if(other == this) return;
+    data = std::make_shared<std::list<K>>(other.data);
+}
+
+template <class K, class V, class Hash>
+insertion_ordered_map<K, V, Hash>::insertion_ordered_map(insertion_ordered_map &&other) noexcept
+: data(other.data) {
+    other.data = nullptr;
+}
+
+template <class K, class V, class Hash>
+insertion_ordered_map<K, V, Hash>::~insertion_ordered_map() noexcept {
+    delete data;
+}
+
+template <class K, class V, class Hash>
+insertion_ordered_map<K, V, Hash> &
+insertion_ordered_map<K, V, Hash>::operator=(insertion_ordered_map<K, V, Hash> other) noexcept {
+    if(this != &other)
+        other.swap(*this);
+    // Old resources released when destructor of other is called.
+    return *this;
+}
+
+
+
 
 
 
