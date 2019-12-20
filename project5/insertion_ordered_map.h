@@ -10,7 +10,7 @@ namespace {
     template <class K, class V>
     class value_in_map {
         const V value;
-        //iterator w list node_in_list;
+        typename std::list<K>::iterator node_iterator;
     };
 
     class lookup_error : std::exception {
@@ -25,7 +25,8 @@ private:
     public:
         Data();
         Data(Data const &other_data) {
-
+            elements_map = {};
+            list_of_recent_keys = {};
         }
 
         std::unordered_map<K, value_in_map<K, V>, Hash> elements_map;
@@ -61,6 +62,7 @@ public:
 
 };
 
+//  constructors
 template <class K, class V, class Hash>
 insertion_ordered_map<K, V, Hash>::insertion_ordered_map() {
     data->list_of_recent_keys = std::make_shared<std::list<K>>(new std::list<K>);
