@@ -20,17 +20,19 @@ template <class K, class V, class Hash = std::hash<K>>
 class insertion_ordered_map {
 private:
 
-    class hash_ptr {
-        Hash hash;
-
-        std::size_t operator()(const K* &k) const noexcept {
-            return hash(*k);
-        }
-    };
-
     class compare_ptr {
         bool operator()(const K* &k1, const K* &k2) const noexcept {
             return *k1 == *k2;
+        }
+    };
+
+    class hash_ptr {
+        Hash hash;
+
+        hash_ptr() = default;
+
+        std::size_t operator()(const K* &k) const noexcept {
+            return hash(*k);
         }
     };
 
@@ -40,10 +42,11 @@ private:
     class Data {
         un_map_type elements_map;
         std::list<pair_in_list> list_of_recent_elements;
+        bool unshareable;
 
-        Data() : elements_map({}), list_of_recent_elements({}) {}
+        Data() : elements_map({}), list_of_recent_elements({}), unshareable(false) {}
 
-        Data(Data const &other) : elements_map({}), list_of_recent_elements({}){
+        Data(Data const &other) : elements_map({}), list_of_recent_elements({}), unshareable(false) {
             elements_map = un_map_type();
             list_of_recent_elements = other.element_list;
             for (auto it = list_of_recent_elements.begin(); it != list_of_recent_elements.end(); ++it) {
@@ -60,7 +63,15 @@ private:
 
     bool copy_data(std::shared_ptr<Data> &backup);
 
+    void about_to_modify(bool markUnsharable) {
+        if (data == nullptr)
+            data = std::make_shared<Data>();
 
+        if (data.use_count() > 1) {
+            data = std::make_shared<Data>(*(this->data));
+        }
+        data->unshareable = markUnsharable;
+    }
 
 public:
     using iterator = typename std::list<pair_in_list>::const_iterator;
