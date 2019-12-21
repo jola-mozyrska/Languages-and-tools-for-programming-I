@@ -6,6 +6,7 @@
 #include <list>
 #include <iterator>
 #include <memory>
+#include "insertion_ordered_map42.h"
 
 namespace {
     template <class K, class V>
@@ -28,6 +29,8 @@ namespace {
 
 template <class K, class V, class Hash = std::hash<K>>
 class insertion_ordered_map {
+    using un_map_type = std::unordered_map<K, value_in_map<K, V>, Hash>;
+
 private:
     class Data{
     public:
@@ -42,7 +45,7 @@ private:
             }*/
         }
 
-        std::unordered_map<K, value_in_map<K, V>, Hash> elements_map;
+        un_map_type elements_map;
         std::list<K> list_of_recent_keys;
     };
 
@@ -74,19 +77,22 @@ public:
     class iterator{
     private:
         typename std::list<K>::const_iterator it;
-        iterator(typename std::list<K>::const_iterator new_it);
+        insertion_ordered_map *ins_ord_map_ptr;
 
     public:
         iterator();
         iterator(const iterator &other);
+        static iterator begin (insertion_ordered_map<K, V, Hash>* const ins_ord_map);
+        static iterator end (insertion_ordered_map<K, V, Hash>* const ins_ord_map);
+
         iterator& operator++();
         bool operator==(const iterator &other) const;
         bool operator!=(const iterator &other) const;
         V& operator*();
     };
 
-    iterator begin() const;
-    iterator end() const;
+    iterator begin() const noexcept;
+    iterator end() const noexcept;
 
 };
 
@@ -126,25 +132,42 @@ insertion_ordered_map<K, V, Hash>::operator=(insertion_ordered_map<K, V, Hash> o
     return *this;
 }
 
-//  iterators
+//  ITERATOR
+
 //  Iteratory mogą być unieważnione przez dowolną operację modyfikacji zakończoną powodzeniem
 //  TODO: zapewnic:
 //Iteratory służą jedynie do przeglądania słownika i za ich pomocą nie można
 //go modyfikować, więc zachowują się jak const_iterator z STL.
 
-// TODO: does begin throw
 template<class K, class V, class Hash>
-typename insertion_ordered_map<K, V, Hash>::iterator insertion_ordered_map<K, V, Hash>::begin() const noexcept{
-    return iterator(data->list_of_recent_keys.begin());
+typename insertion_ordered_map<K, V, Hash>::
+iterator insertion_ordered_map<K, V, Hash>::begin() const noexcept{
+    return iterator::begin(this);
 }
 
-// TODO: does end throw
 template<class K, class V, class Hash>
-typename insertion_ordered_map<K, V, Hash>::iterator insertion_ordered_map<K, V, Hash>::end() const noexcept{
-    return iterator(data->list_of_recent_keys.end());
+typename insertion_ordered_map<K, V, Hash>::
+iterator insertion_ordered_map<K, V, Hash>::end() const noexcept{
+    return iterator::end(this);
 }
 
-//iterator(typename std::list<K>::const_iterator new_it) : it(new_it) {}
+template<class K, class V, class Hash>
+typename insertion_ordered_map<K, V, Hash>::
+iterator insertion_ordered_map<K, V, Hash>::
+iterator::begin(insertion_ordered_map<K, V, Hash>* const ins_ord_map) {
+    iterator returned_it(ins_ord_map);
+    returned_it.it(ins_ord_map->data->list_of_recent_keys.begin());
+    return returned_it;
+}
+
+template<class K, class V, class Hash>
+typename insertion_ordered_map<K, V, Hash>::
+iterator insertion_ordered_map<K, V, Hash>::
+iterator::end(insertion_ordered_map<K, V, Hash>* const ins_ord_map) {
+    iterator returned_it(ins_ord_map);
+    returned_it.it(ins_ord_map->data->list_of_recent_keys.end());
+    return returned_it;
+}
 
 // TODO:noexcept?
 //  TODO: how to set to the end?
@@ -182,9 +205,10 @@ operator!=(const insertion_ordered_map<K, V, Hash>::iterator& other_it) const {
 template<class K, class V, class Hash>
 V& insertion_ordered_map<K, V, Hash>::iterator::
 operator*() {
-    return data->elements_map[*it].value;
+    return this->ins_ord_map_ptr->data->elements_map[*it].value;
 }
 
+//  OPERATIONS ON MAP
 
 template<class K, class V, class Hash>
 bool insertion_ordered_map<K, V, Hash>::copy_data(std::shared_ptr<Data> &backup) {
