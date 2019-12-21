@@ -31,7 +31,6 @@ private:
     class hash_ptr {
     public:
         Hash hash;
-
         hash_ptr() = default;
 
         std::size_t operator()(const K* const &k) const noexcept {
@@ -42,7 +41,6 @@ private:
     using pair_in_list = std::pair<K, V>;
     using un_map_type = std::unordered_map<const K *, typename std::list<pair_in_list>::iterator, hash_ptr, compare_ptr>;
 
-public:
     class Data {
     public:
         un_map_type elements_map;
@@ -51,7 +49,7 @@ public:
 
         Data() : elements_map({}), list_of_recent_elements({}), unshareable(false) {}
 
-        Data(Data const &other) : elements_map({}), list_of_recent_elements({}), unshareable(false) {
+        Data(Data const &other) : unshareable(false) {
             elements_map = un_map_type();
             list_of_recent_elements = other.list_of_recent_elements;
             for (auto it = list_of_recent_elements.begin(); it != list_of_recent_elements.end(); ++it) {
@@ -61,7 +59,8 @@ public:
 
         Data(Data &&other) noexcept :
                 elements_map(std::move(other.elements_map)),
-                list_of_recent_elements(std::move(other.list_of_recent_elements)) {}
+                list_of_recent_elements(std::move(other.list_of_recent_elements)),
+                unshareable(other.unshareable) {}
 
         Data& operator=(Data &other) {
             elements_map = other.elements_map;
@@ -83,6 +82,7 @@ public:
         data->unshareable = markUnsharable;
     }
 
+public:
     using iterator = typename std::list<pair_in_list>::const_iterator;
 
     insertion_ordered_map() noexcept;
