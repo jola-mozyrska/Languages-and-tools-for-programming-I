@@ -63,7 +63,7 @@ private:
 
     bool copy_data(std::shared_ptr<Data> &backup);
 
-    void about_to_modify(bool markUnsharable) {
+    void before_modify(bool markUnsharable) {
         if (data == nullptr)
             data = std::make_shared<Data>();
 
@@ -77,7 +77,6 @@ public:
     using iterator = typename std::list<pair_in_list>::const_iterator;
 
     insertion_ordered_map() noexcept;
-    ~insertion_ordered_map() noexcept;
     insertion_ordered_map(insertion_ordered_map const &other);
     insertion_ordered_map(insertion_ordered_map &&other) noexcept;
     insertion_ordered_map &operator=(insertion_ordered_map other) noexcept;
@@ -121,11 +120,6 @@ insertion_ordered_map<K, V, Hash>::insertion_ordered_map(insertion_ordered_map c
 template <class K, class V, class Hash>
 insertion_ordered_map<K, V, Hash>::insertion_ordered_map(insertion_ordered_map &&other) noexcept
 : data(std::move(other.data)) {}
-
-template <class K, class V, class Hash>
-insertion_ordered_map<K, V, Hash>::~insertion_ordered_map() noexcept {
-    delete data;
-}
 
 template <class K, class V, class Hash>
 insertion_ordered_map<K, V, Hash> &
