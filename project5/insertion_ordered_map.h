@@ -60,7 +60,6 @@ private:
     };
 
     std::shared_ptr<Data> data;
-
     bool copy_data(std::shared_ptr<Data> &backup);
 
     void before_modify(bool markUnsharable) {
