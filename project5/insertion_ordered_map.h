@@ -39,7 +39,7 @@ private:
 
     class Data {
         un_map_type elements_map;
-        std::list<K,V> list_of_recent_elements;
+        std::list<pair_in_list> list_of_recent_elements;
 
         Data() : elements_map({}), list_of_recent_elements({}) {}
 
@@ -59,7 +59,8 @@ private:
     std::shared_ptr<Data> data;
 
     bool copy_data(std::shared_ptr<Data> &backup);
-    //  add sharable to functions
+
+
 
 public:
     using iterator = typename pair_in_list::const_iterator;
