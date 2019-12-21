@@ -6,7 +6,7 @@
 #include <list>
 #include <iterator>
 #include <memory>
-#include "insertion_ordered_map42.h"
+// #include "insertion_ordered_map42.h"
 
 namespace {
     template <class K, class V>
@@ -18,7 +18,7 @@ namespace {
             this->node_iterator = node_iterator;
         }
 
-        const V value;
+        V value;
         typename std::list<K>::const_iterator node_iterator;
     };
 
@@ -214,7 +214,7 @@ bool insertion_ordered_map<K, V, Hash>::copy_data(std::shared_ptr<Data> &backup)
     if(!data.unique()) {
         try {
             backup = data;
-            data = std::make_shared(Data(*data));
+            data = std::make_shared<Data>(data);
             return true;
         }
         catch(std::exception &e) {
@@ -283,7 +283,7 @@ void insertion_ordered_map<K, V, Hash>::merge(insertion_ordered_map const &other
                 data->list_of_recent_keys.splice(data->list_of_recent_keys.end(), data->list_of_recent_keys, data->elements_map[key].node_iterator);
             else {
                 data->list_of_recent_keys.push_back(key);
-                data->elements_map[key] = value_in_map<K, V>(other[key], std::prev(data->list_of_recent_keys.end()));
+                data->elements_map[key] = value_in_map<K, V>(other.at(key), std::prev(data->list_of_recent_keys.end()));
             }
         }
     }
@@ -301,7 +301,7 @@ V &insertion_ordered_map<K, V, Hash>::at(K const &k) {
     if(!contains(k))
         throw lookup_error();
 
-    return *(data->elements_map[k].node_iterator);
+    return data->elements_map[k].value;
 }
 
 template<class K, class V, class Hash>
@@ -329,7 +329,7 @@ bool insertion_ordered_map<K, V, Hash>::empty() const {
 
 template<class K, class V, class Hash>
 void insertion_ordered_map<K, V, Hash>::clear() {
-    data = std::make_shared(Data());
+    data = std::make_shared<Data>(Data());
 }
 
 template<class K, class V, class Hash>
