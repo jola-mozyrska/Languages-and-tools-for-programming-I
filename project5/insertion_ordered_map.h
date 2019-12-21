@@ -40,7 +40,6 @@ private:
                 elements_map[key] = value_in_map_cpy;
             }
 
-//            list_of_recent_keys = std::list<K>(other_data.list_of_recent_keys);
         }
 
         std::unordered_map<K, value_in_map<K, V>, Hash> elements_map;
@@ -111,6 +110,8 @@ insertion_ordered_map<K, V, Hash>::operator=(insertion_ordered_map<K, V, Hash> o
     // Old resources released when destructor of other is called.
     return *this;
 }
+
+//  iterators
 
 
 
