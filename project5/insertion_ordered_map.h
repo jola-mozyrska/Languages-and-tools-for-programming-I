@@ -6,7 +6,6 @@
 #include <list>
 #include <iterator>
 #include <memory>
-// #include "insertion_ordered_map42.h"
 
 namespace {
     template <class K, class V>
