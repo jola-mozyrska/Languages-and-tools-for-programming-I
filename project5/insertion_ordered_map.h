@@ -6,6 +6,7 @@
 #include <list>
 #include <iterator>
 #include <memory>
+#include <algorithm>
 
 namespace {
     class lookup_error : std::exception {
@@ -21,25 +22,29 @@ class insertion_ordered_map {
 private:
 
     class compare_ptr {
-        bool operator()(const K* &k1, const K* &k2) const noexcept {
+    public:
+        bool operator()(const K* const &k1, const K* const &k2) const noexcept {
             return *k1 == *k2;
         }
     };
 
     class hash_ptr {
+    public:
         Hash hash;
 
         hash_ptr() = default;
 
-        std::size_t operator()(const K* &k) const noexcept {
+        std::size_t operator()(const K* const &k) const noexcept {
             return hash(*k);
         }
     };
 
     using pair_in_list = std::pair<K, V>;
-    using un_map_type = std::unordered_map<K *, typename std::list<pair_in_list>::iterator, hash_ptr, compare_ptr>;
+    using un_map_type = std::unordered_map<const K *, typename std::list<pair_in_list>::iterator, hash_ptr, compare_ptr>;
 
+public:
     class Data {
+    public:
         un_map_type elements_map;
         std::list<pair_in_list> list_of_recent_elements;
         bool unshareable;
@@ -48,7 +53,7 @@ private:
 
         Data(Data const &other) : elements_map({}), list_of_recent_elements({}), unshareable(false) {
             elements_map = un_map_type();
-            list_of_recent_elements = other.element_list;
+            list_of_recent_elements = other.list_of_recent_elements;
             for (auto it = list_of_recent_elements.begin(); it != list_of_recent_elements.end(); ++it) {
                 elements_map[&(it->first)] = it;
             }
@@ -57,6 +62,12 @@ private:
         Data(Data &&other) noexcept :
                 elements_map(std::move(other.elements_map)),
                 list_of_recent_elements(std::move(other.list_of_recent_elements)) {}
+
+        Data& operator=(Data &other) {
+            elements_map = other.elements_map;
+            list_of_recent_elements = other.list_of_recent_elements;
+            return *this;
+        }
     };
 
     std::shared_ptr<Data> data;
@@ -72,7 +83,6 @@ private:
         data->unshareable = markUnsharable;
     }
 
-public:
     using iterator = typename std::list<pair_in_list>::const_iterator;
 
     insertion_ordered_map() noexcept;
@@ -93,11 +103,11 @@ public:
     bool contains(K const &k) const;
 
     iterator begin() const {
-        return data == nullptr ? iterator() : data->element_list.begin();
+        return data == nullptr ? iterator() : data->list_of_recent_elements.begin();
     }
 
     iterator end() const {
-        return data == nullptr ? iterator() : data->element_list.end();
+        return data == nullptr ? iterator() : data->list_of_recent_elements.end();
     }
 };
 
@@ -105,15 +115,15 @@ public:
 
 template <class K, class V, class Hash>
 insertion_ordered_map<K, V, Hash>::insertion_ordered_map() noexcept{
-    data = std::make_shared<data>();
+    data = std::make_shared<Data>();
 }
 
 template <class K, class V, class Hash>
 insertion_ordered_map<K, V, Hash>::insertion_ordered_map(insertion_ordered_map const &other) {
-    if (other.data_->markUnshareable)
+    if (other.data->unshareable)
         data = other.data;
     else
-        data = std::make_shared<data>(*(other.data));
+        data = std::make_shared<Data>(*(other.data));
 }
 
 template <class K, class V, class Hash>
@@ -136,7 +146,7 @@ bool insertion_ordered_map<K, V, Hash>::copy_data(std::shared_ptr<Data> &backup)
     if(!data.unique()) {
         try {
             backup = data;
-            data = std::make_shared<Data>(data);
+            data = std::make_shared<Data>(*data);
             return true;
         }
         catch(std::exception &e) {
@@ -183,7 +193,7 @@ void insertion_ordered_map<K, V, Hash>::erase(K const &k) {
         if(!contains(k))
             throw lookup_error();
 
-        data->list_of_recent_elements.erase(data->elements_map[&k]);
+        data->list_of_recent_elements.erase((data->elements_map).at(&k));
         data->elements_map.erase(&k);    
     }
     catch(std::exception &e) {
@@ -200,12 +210,13 @@ void insertion_ordered_map<K, V, Hash>::merge(insertion_ordered_map const &other
     Data old_data{*data};
 
     try {
-        for(K key : other.data->list_of_recent_elements) {
+        for(pair_in_list &pair : other.data->list_of_recent_elements) {
+            const K &key = pair.first;
             if(contains(key))
                 data->list_of_recent_elements.splice(data->list_of_recent_elements.end(), data->list_of_recent_elements, data->elements_map[&key]);
             else {
                 data->list_of_recent_elements.push_back(std::make_pair(key, other.at(key)));
-                data->elements_map[key] = std::prev(data->list_of_recent_elements.end());
+                data->elements_map[&key] = std::prev(data->list_of_recent_elements.end());
             }
         }
     }
@@ -223,7 +234,7 @@ V &insertion_ordered_map<K, V, Hash>::at(K const &k) {
     if(!contains(k))
         throw lookup_error();
 
-    return (*data->elements_map[&k])->second;
+    return (data->elements_map[&k])->second;
 }
 
 template<class K, class V, class Hash>
