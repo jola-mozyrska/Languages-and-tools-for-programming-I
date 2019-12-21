@@ -243,7 +243,7 @@ bool insertion_ordered_map<K, V, Hash>::empty() const {
 
 template<class K, class V, class Hash>
 void insertion_ordered_map<K, V, Hash>::clear() {
-    data = Data();
+    data = std::make_shared(Data());
 }
 
 template<class K, class V, class Hash>
