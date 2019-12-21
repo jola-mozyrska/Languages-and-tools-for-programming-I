@@ -36,13 +36,12 @@ private:
     public:
         Data();
         Data(Data const &other_data) {
-            /*elements_map = {};
-            for(auto it = other_data.elements_map.begin(); it != other_data.elements_map.end(); ++it) {
-                K key(it->first);
-                V value(it->second.value);
-                value_in_map value_in_map_cpy(value, nullptr);
-                elements_map[key] = value_in_map_cpy;
-            }*/
+            list_of_recent_keys = list_of_recent_keys(other_data.list_of_recent_keys);
+            elements_map = elements_map(other_data.elements_map);
+
+            for(auto it = list_of_recent_keys.begin(); it != list_of_recent_keys.end(); ++it) {
+                elements_map[*it].node_iterator = it;
+            }
         }
 
         un_map_type elements_map;
