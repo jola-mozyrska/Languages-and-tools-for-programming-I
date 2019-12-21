@@ -8,59 +8,67 @@
 #include <memory>
 
 namespace {
-    template <class K, class V>
-    class value_in_map {
-    public:
-        value_in_map() = default;
-        value_in_map(V value, typename std::list<K>::const_iterator node_iterator) {
-            this->value = value;
-            this->node_iterator = node_iterator;
-        }
-
-        V value;
-        typename std::list<K>::const_iterator node_iterator;
-    };
-
     class lookup_error : std::exception {
         virtual const char* what() const throw()
         {
-            return "Lookup error happened";
+            return "Element does not exit in the map";
         }
     };
 }
 
 template <class K, class V, class Hash = std::hash<K>>
 class insertion_ordered_map {
-    using un_map_type = std::unordered_map<K, value_in_map<K, V>, Hash>;
-
 private:
-    class Data{
-    public:
-        Data();
-        Data(Data const &other_data) {
-            list_of_recent_keys = list_of_recent_keys(other_data.list_of_recent_keys);
-            elements_map = elements_map(other_data.elements_map);
 
-            for(auto it = list_of_recent_keys.begin(); it != list_of_recent_keys.end(); ++it) {
-                elements_map[*it].node_iterator = it;
+    class hash_ptr {
+        Hash hash;
+
+        std::size_t operator[](const K* &k) const noexcept {
+            return hash(*k);
+        }
+    };
+
+    class compare_ptr {
+        bool operator()(const K* &k1, const K* &k2) const noexcept {
+            return *k1 == *k2;
+        }
+    };
+
+    using un_map_type = std::unordered_map<K *, typename std::list<K,V>::iterator, hash_ptr, compare_ptr>;
+    using pair_in_list = std::pair<K, V>;
+
+    class Data {
+        un_map_type elements_map;
+        std::list<K,V> list_of_recent_elements;
+
+        Data() : elements_map({}), list_of_recent_elements({}) {}
+
+        Data(Data const &other) : elements_map({}), list_of_recent_elements({}){
+            elements_map = un_map_type();
+            list_of_recent_elements = other.element_list;
+            for (auto it = list_of_recent_elements.begin(); it != list_of_recent_elements.end(); ++it) {
+                elements_map[&(it->first)] = it;
             }
         }
 
-        un_map_type elements_map;
-        std::list<K> list_of_recent_keys;
+        Data(Data &&other) noexcept :
+                elements_map(std::move(other.elements_map)),
+                list_of_recent_elements(std::move(other.list_of_recent_elements)) {}
     };
-
-    bool copy_data(std::shared_ptr<Data> &backup);
 
     std::shared_ptr<Data> data;
 
+    bool copy_data(std::shared_ptr<Data> &backup);
+    //  add sharable to functions
+
 public:
-    insertion_ordered_map();
+    using iterator = typename pair_in_list::const_iterator;
+
+    insertion_ordered_map() noexcept;
     ~insertion_ordered_map() noexcept;
     insertion_ordered_map(insertion_ordered_map const &other);
     insertion_ordered_map(insertion_ordered_map &&other) noexcept;
     insertion_ordered_map &operator=(insertion_ordered_map other) noexcept;
-
 
     bool insert(K const &k, V const &v);
     void erase(K const &k);
@@ -74,52 +82,33 @@ public:
     void clear();
     bool contains(K const &k) const;
 
-    //  TODO: should it inherit : public std::iterator<std::input_iterator_tag, int>?
-    class iterator{
-    private:
-        typename std::list<K>::const_iterator it;
-        insertion_ordered_map *ins_ord_map_ptr;
+    iterator begin() const {
+        return data == nullptr ? iterator() : data->element_list.begin();
+    }
 
-    public:
-        iterator();
-        iterator(const iterator &other);
-        static iterator begin (insertion_ordered_map<K, V, Hash>* const ins_ord_map);
-        static iterator end (insertion_ordered_map<K, V, Hash>* const ins_ord_map);
-
-        iterator& operator++();
-        bool operator==(const iterator &other) const;
-        bool operator!=(const iterator &other) const;
-        V& operator*();
-
-
-    };
-
-    iterator begin() const noexcept;
-    iterator end() const noexcept;
-
+    iterator end() const {
+        return data == nullptr ? iterator() : data->element_list.end();
+    }
 };
 
-//  constructors
-// TODO:noexcept?
-template <class K, class V, class Hash>
-insertion_ordered_map<K, V, Hash>::insertion_ordered_map() {
-    data->list_of_recent_keys = std::make_shared<std::list<K>>(std::list<K>());
+//  CONSTRUCTORS
 
-    std::unordered_map<K, value_in_map<K, V>, Hash> m = {};
-    data->elements_map = std::make_shared<std::unordered_map<K, value_in_map<K, V>, Hash>>(m);
+template <class K, class V, class Hash>
+insertion_ordered_map<K, V, Hash>::insertion_ordered_map() noexcept{
+    data = std::make_shared<data>();
 }
 
-// TODO:noexcept?
 template <class K, class V, class Hash>
 insertion_ordered_map<K, V, Hash>::insertion_ordered_map(insertion_ordered_map const &other) {
-    data = std::make_shared<std::list<K>>(other.data);
+    if (other.data_->markUnshareable)
+        data = other.data;
+    else
+        data = std::make_shared<data>(*(other.data));
 }
 
 template <class K, class V, class Hash>
 insertion_ordered_map<K, V, Hash>::insertion_ordered_map(insertion_ordered_map &&other) noexcept
-: data(other.data) {
-    other.data = nullptr;
-}
+: data(std::move(other.data)) {}
 
 template <class K, class V, class Hash>
 insertion_ordered_map<K, V, Hash>::~insertion_ordered_map() noexcept {
@@ -131,84 +120,8 @@ insertion_ordered_map<K, V, Hash> &
 insertion_ordered_map<K, V, Hash>::operator=(insertion_ordered_map<K, V, Hash> other) noexcept {
     if(this != &other)
         other.swap(*this);
-    // Old resources released when destructor of other is called.
+    // Old resources released when the destructor of 'other' is called.
     return *this;
-}
-
-//  ITERATOR
-
-//  Iteratory mogą być unieważnione przez dowolną operację modyfikacji zakończoną powodzeniem
-//  TODO: zapewnic:
-//Iteratory służą jedynie do przeglądania słownika i za ich pomocą nie można
-//go modyfikować, więc zachowują się jak const_iterator z STL.
-
-template<class K, class V, class Hash>
-typename insertion_ordered_map<K, V, Hash>::
-iterator insertion_ordered_map<K, V, Hash>::begin() const noexcept{
-    return iterator::begin(this);
-}
-
-template<class K, class V, class Hash>
-typename insertion_ordered_map<K, V, Hash>::
-iterator insertion_ordered_map<K, V, Hash>::end() const noexcept{
-    return iterator::end(this);
-}
-
-template<class K, class V, class Hash>
-typename insertion_ordered_map<K, V, Hash>::
-iterator insertion_ordered_map<K, V, Hash>::
-iterator::begin(insertion_ordered_map<K, V, Hash>* const ins_ord_map) {
-    iterator returned_it(ins_ord_map);
-    returned_it.it(ins_ord_map->data->list_of_recent_keys.begin());
-    return returned_it;
-}
-
-template<class K, class V, class Hash>
-typename insertion_ordered_map<K, V, Hash>::
-iterator insertion_ordered_map<K, V, Hash>::
-iterator::end(insertion_ordered_map<K, V, Hash>* const ins_ord_map) {
-    iterator returned_it(ins_ord_map);
-    returned_it.it(ins_ord_map->data->list_of_recent_keys.end());
-    return returned_it;
-}
-
-// TODO:noexcept?
-//  TODO: how to set to the end?
-template<class K, class V, class Hash>
-insertion_ordered_map<K, V, Hash>::iterator::iterator()  {
-}
-
-// TODO:noexcept?
-template<class K, class V, class Hash>
-insertion_ordered_map<K, V, Hash>::iterator::iterator(const iterator &other_it) : it(other_it.it)  {}
-
-// TODO:noexcept?
-template<class K, class V, class Hash>
-typename insertion_ordered_map<K, V, Hash>::iterator&
-insertion_ordered_map<K, V, Hash>::iterator::operator++() {
-    ++it;
-    return *this;
-}
-
-// TODO:noexcept?
-template<class K, class V, class Hash>
-bool insertion_ordered_map<K, V, Hash>::iterator::
-operator==(const insertion_ordered_map<K, V, Hash>::iterator& other_it) const {
-    return this->it==other_it->it;
-}
-
-// TODO:noexcept?
-template<class K, class V, class Hash>
-bool insertion_ordered_map<K, V, Hash>::iterator::
-operator!=(const insertion_ordered_map<K, V, Hash>::iterator& other_it) const {
-    return this->it!=other_it->it;
-}
-
-// TODO:noexcept?
-template<class K, class V, class Hash>
-V& insertion_ordered_map<K, V, Hash>::iterator::
-operator*() {
-    return this->ins_ord_map_ptr->data->elements_map[*it].value;
 }
 
 //  OPERATIONS ON MAP
