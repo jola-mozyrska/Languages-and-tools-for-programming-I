@@ -131,7 +131,7 @@ template <class K, class V, class Hash>
 insertion_ordered_map<K, V, Hash> &
 insertion_ordered_map<K, V, Hash>::operator=(insertion_ordered_map<K, V, Hash> other) noexcept {
     if(this != &other)
-        other.swap(*this);
+        data.swap(other.data);
     // Old resources released when the destructor of 'other' is called.
     return *this;
 }
