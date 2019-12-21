@@ -34,12 +34,12 @@ private:
         }
     };
 
-    using un_map_type = std::unordered_map<K *, typename std::list<K,V>::iterator, hash_ptr, compare_ptr>;
     using pair_in_list = std::pair<K, V>;
+    using un_map_type = std::unordered_map<K *, typename std::list<pair_in_list>::iterator, hash_ptr, compare_ptr>;
 
     class Data {
         un_map_type elements_map;
-        std::list<K,V> list_of_recent_elements;
+        std::list<pair_in_list> list_of_recent_elements;
 
         Data() : elements_map({}), list_of_recent_elements({}) {}
 
@@ -62,7 +62,7 @@ private:
     //  add sharable to functions
 
 public:
-    using iterator = typename pair_in_list::const_iterator;
+    using iterator = typename std::list<pair_in_list>::const_iterator;
 
     insertion_ordered_map() noexcept;
     ~insertion_ordered_map() noexcept;
@@ -149,20 +149,20 @@ bool insertion_ordered_map<K, V, Hash>::insert(K const &k, V const &v) {
     bool copied = copy_data(backup);
         
     if(contains(k)) {
-        data->list_of_recent_keys.splice(data->list_of_recent_keys.end(), data->list_of_recent_keys, data->elements_map[k].node_iterator);
+        data->list_of_recent_elements.splice(data->list_of_recent_elements.end(), data->list_of_recent_elements, data->elements_map[&k]);
         return false;
     }
     else {
         try {
-            data->list_of_recent_keys.push_back(k);
-            data->elements_map[k] = value_in_map<K, V>(v, std::prev(data->list_of_recent_keys.end()));
+            data->list_of_recent_elements.push_back(std::make_pair(k, v));
+            data->elements_map[&k] = std::prev(data->list_of_recent_elements.end());
             return true;
         }
         catch(std::exception &e) {
             if(copied)
                 data = backup;
-            data->elements_map.erase(k);
-            data->list_of_recent_keys.pop_back();
+            data->elements_map.erase(&k);
+            data->list_of_recent_elements.pop_back();
 
             throw e;
         }
@@ -178,8 +178,8 @@ void insertion_ordered_map<K, V, Hash>::erase(K const &k) {
         if(!contains(k))
             throw lookup_error();
 
-        data->list_of_recent_keys.erase(data->elements_map[k].node_iterator);
-        data->elements_map.erase(k);    
+        data->list_of_recent_elements.erase(data->elements_map[&k]);
+        data->elements_map.erase(&k);    
     }
     catch(std::exception &e) {
         if(copied)
@@ -195,12 +195,12 @@ void insertion_ordered_map<K, V, Hash>::merge(insertion_ordered_map const &other
     Data old_data{*data};
 
     try {
-        for(K key : other.data->list_of_recent_keys) {
+        for(K key : other.data->list_of_recent_elements) {
             if(contains(key))
-                data->list_of_recent_keys.splice(data->list_of_recent_keys.end(), data->list_of_recent_keys, data->elements_map[key].node_iterator);
+                data->list_of_recent_elements.splice(data->list_of_recent_elements.end(), data->list_of_recent_elements, data->elements_map[&key]);
             else {
-                data->list_of_recent_keys.push_back(key);
-                data->elements_map[key] = value_in_map<K, V>(other.at(key), std::prev(data->list_of_recent_keys.end()));
+                data->list_of_recent_elements.push_back(std::make_pair(key, other.at(key)));
+                data->elements_map[key] = std::prev(data->list_of_recent_elements.end());
             }
         }
     }
@@ -218,7 +218,7 @@ V &insertion_ordered_map<K, V, Hash>::at(K const &k) {
     if(!contains(k))
         throw lookup_error();
 
-    return data->elements_map[k].value;
+    return (*data->elements_map[&k])->second;
 }
 
 template<class K, class V, class Hash>
@@ -236,7 +236,7 @@ V &insertion_ordered_map<K, V, Hash>::operator[](K const &k) {
 
 template<class K, class V, class Hash>
 size_t insertion_ordered_map<K, V, Hash>::size() const {
-    return data->list_of_recent_keys.size();
+    return data->list_of_recent_elements.size();
 }
 
 template<class K, class V, class Hash>
@@ -251,7 +251,7 @@ void insertion_ordered_map<K, V, Hash>::clear() {
 
 template<class K, class V, class Hash>
 bool insertion_ordered_map<K, V, Hash>::contains(K const &k) const {
-    return data->elements_map.find(k) != data->elements_map.end();
+    return data->elements_map.find(&k) != data->elements_map.end();
 }
 
 #endif //INSERTION_ORDERED_MAP_H
