@@ -12,13 +12,13 @@ namespace {
     class value_in_map {
     public:
         value_in_map() = default;
-        value_in_map(V value, typename std::list<K>::iterator node_iterator) {
+        value_in_map(V value, typename std::list<K>::const_iterator node_iterator) {
             this->value = value;
             this->node_iterator = node_iterator;
         }
 
         const V value;
-        typename std::list<K>::iterator node_iterator;
+        typename std::list<K>::const_iterator node_iterator;
     };
 
     class lookup_error : std::exception {
@@ -73,8 +73,8 @@ public:
     //  TODO: should it inherit : public std::iterator<std::input_iterator_tag, int>?
     class iterator{
     private:
-        typename std::list<K>::iterator it;
-        iterator(typename std::list<K>::iterator new_it);
+        typename std::list<K>::const_iterator it;
+        iterator(typename std::list<K>::const_iterator new_it);
 
     public:
         iterator();
@@ -91,6 +91,7 @@ public:
 };
 
 //  constructors
+// TODO:noexcept?
 template <class K, class V, class Hash>
 insertion_ordered_map<K, V, Hash>::insertion_ordered_map() {
     data->list_of_recent_keys = std::make_shared<std::list<K>>(std::list<K>());
@@ -99,10 +100,9 @@ insertion_ordered_map<K, V, Hash>::insertion_ordered_map() {
     data->elements_map = std::make_shared<std::unordered_map<K, value_in_map<K, V>, Hash>>(m);
 }
 
+// TODO:noexcept?
 template <class K, class V, class Hash>
 insertion_ordered_map<K, V, Hash>::insertion_ordered_map(insertion_ordered_map const &other) {
-    //  TODO: should it throw except instead of return?
-    if(other == this) return;
     data = std::make_shared<std::list<K>>(other.data);
 }
 
@@ -128,29 +128,35 @@ insertion_ordered_map<K, V, Hash>::operator=(insertion_ordered_map<K, V, Hash> o
 
 //  iterators
 //  Iteratory mogą być unieważnione przez dowolną operację modyfikacji zakończoną powodzeniem
+//  TODO: zapewnic:
+//Iteratory służą jedynie do przeglądania słownika i za ich pomocą nie można
+//go modyfikować, więc zachowują się jak const_iterator z STL.
 
 // TODO: does begin throw
 template<class K, class V, class Hash>
-typename insertion_ordered_map<K, V, Hash>::iterator insertion_ordered_map<K, V, Hash>::begin() const{
+typename insertion_ordered_map<K, V, Hash>::iterator insertion_ordered_map<K, V, Hash>::begin() const noexcept{
     return iterator(data->list_of_recent_keys.begin());
 }
 
 // TODO: does end throw
 template<class K, class V, class Hash>
-typename insertion_ordered_map<K, V, Hash>::iterator insertion_ordered_map<K, V, Hash>::end() const{
+typename insertion_ordered_map<K, V, Hash>::iterator insertion_ordered_map<K, V, Hash>::end() const noexcept{
     return iterator(data->list_of_recent_keys.end());
 }
 
-//iterator(typename std::list<K>::iterator new_it) : it(new_it) {}
+//iterator(typename std::list<K>::const_iterator new_it) : it(new_it) {}
 
+// TODO:noexcept?
 //  TODO: how to set to the end?
 template<class K, class V, class Hash>
 insertion_ordered_map<K, V, Hash>::iterator::iterator()  {
 }
 
+// TODO:noexcept?
 template<class K, class V, class Hash>
 insertion_ordered_map<K, V, Hash>::iterator::iterator(const iterator &other_it) : it(other_it.it)  {}
 
+// TODO:noexcept?
 template<class K, class V, class Hash>
 typename insertion_ordered_map<K, V, Hash>::iterator&
 insertion_ordered_map<K, V, Hash>::iterator::operator++() {
@@ -158,18 +164,21 @@ insertion_ordered_map<K, V, Hash>::iterator::operator++() {
     return *this;
 }
 
+// TODO:noexcept?
 template<class K, class V, class Hash>
 bool insertion_ordered_map<K, V, Hash>::iterator::
 operator==(const insertion_ordered_map<K, V, Hash>::iterator& other_it) const {
     return this->it==other_it->it;
 }
 
+// TODO:noexcept?
 template<class K, class V, class Hash>
 bool insertion_ordered_map<K, V, Hash>::iterator::
 operator!=(const insertion_ordered_map<K, V, Hash>::iterator& other_it) const {
     return this->it!=other_it->it;
 }
 
+// TODO:noexcept?
 template<class K, class V, class Hash>
 V& insertion_ordered_map<K, V, Hash>::iterator::
 operator*() {
