@@ -33,14 +33,13 @@ private:
     public:
         Data();
         Data(Data const &other_data) {
-            elements_map = {};
+            /*elements_map = {};
             for(auto it = other_data.elements_map.begin(); it != other_data.elements_map.end(); ++it) {
                 K key(it->first);
                 V value(it->second.value);
                 value_in_map value_in_map_cpy(value, nullptr);
                 elements_map[key] = value_in_map_cpy;
-            }
-
+            }*/
         }
 
         std::unordered_map<K, value_in_map<K, V>, Hash> elements_map;
@@ -71,17 +70,22 @@ public:
     void clear();
     bool contains(K const &k) const;
 
+    //  TODO: should it inherit : public std::iterator<std::input_iterator_tag, int>?
     class iterator{
+    private:
+        typename std::list<K>::iterator it;
+        iterator(typename std::list<K>::iterator new_it);
+
+    public:
         iterator();
         iterator(const iterator &other);
         iterator& operator++();
-        bool operator==(iterator &other) const;
-        bool operator!=(iterator &other) const;
+        bool operator==(const iterator &other) const;
+        bool operator!=(const iterator &other) const;
+        V& operator*();
     };
 
-    iterator begin();
     iterator begin() const;
-    iterator end();
     iterator end() const;
 
 };
@@ -123,6 +127,55 @@ insertion_ordered_map<K, V, Hash>::operator=(insertion_ordered_map<K, V, Hash> o
 }
 
 //  iterators
+//  Iteratory mogą być unieważnione przez dowolną operację modyfikacji zakończoną powodzeniem
+
+// TODO: does begin throw
+template<class K, class V, class Hash>
+typename insertion_ordered_map<K, V, Hash>::iterator insertion_ordered_map<K, V, Hash>::begin() const{
+    return iterator(data->list_of_recent_keys.begin());
+}
+
+// TODO: does end throw
+template<class K, class V, class Hash>
+typename insertion_ordered_map<K, V, Hash>::iterator insertion_ordered_map<K, V, Hash>::end() const{
+    return iterator(data->list_of_recent_keys.end());
+}
+
+//iterator(typename std::list<K>::iterator new_it) : it(new_it) {}
+
+//  TODO: how to set to the end?
+template<class K, class V, class Hash>
+insertion_ordered_map<K, V, Hash>::iterator::iterator()  {
+}
+
+template<class K, class V, class Hash>
+insertion_ordered_map<K, V, Hash>::iterator::iterator(const iterator &other_it) : it(other_it.it)  {}
+
+template<class K, class V, class Hash>
+typename insertion_ordered_map<K, V, Hash>::iterator&
+insertion_ordered_map<K, V, Hash>::iterator::operator++() {
+    ++it;
+    return *this;
+}
+
+template<class K, class V, class Hash>
+bool insertion_ordered_map<K, V, Hash>::iterator::
+operator==(const insertion_ordered_map<K, V, Hash>::iterator& other_it) const {
+    return this->it==other_it->it;
+}
+
+template<class K, class V, class Hash>
+bool insertion_ordered_map<K, V, Hash>::iterator::
+operator!=(const insertion_ordered_map<K, V, Hash>::iterator& other_it) const {
+    return this->it!=other_it->it;
+}
+
+template<class K, class V, class Hash>
+V& insertion_ordered_map<K, V, Hash>::iterator::
+operator*() {
+    return data->elements_map[*it].value;
+}
+
 
 template<class K, class V, class Hash>
 bool insertion_ordered_map<K, V, Hash>::copy_data(std::shared_ptr<Data> &backup) {
