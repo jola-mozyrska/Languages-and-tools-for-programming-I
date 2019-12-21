@@ -158,7 +158,7 @@ bool insertion_ordered_map<K, V, Hash>::insert(K const &k, V const &v) {
     else {
         try {
             data->list_of_recent_elements.push_back(std::make_pair(k, v));
-            data->elements_map[&k] = std::prev(data->list_of_recent_elements.end());
+            data->elements_map[&(data->list_of_recent_elements.back().first)] = std::prev(data->list_of_recent_elements.end());
             return true;
         }
         catch(std::exception &e) {
@@ -227,7 +227,10 @@ V &insertion_ordered_map<K, V, Hash>::at(K const &k) {
 
 template<class K, class V, class Hash>
 V const &insertion_ordered_map<K, V, Hash>::at(K const &k) const {
-    return at(k);
+    if(!contains(k))
+        throw lookup_error();
+
+    return (data->elements_map[&k])->second;
 }
 
 template<class K, class V, class Hash>
