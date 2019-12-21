@@ -73,12 +73,9 @@ private:
     bool copy_data(std::shared_ptr<Data> &backup);
 
     void before_modify(bool markUnsharable) {
-        if (data == nullptr)
-            data = std::make_shared<Data>();
+        if (!data) data = std::make_shared<Data>();
+        if (!data.unique()) data = std::make_shared<Data>(*(this->data));
 
-        if (data.use_count() > 1) {
-            data = std::make_shared<Data>(*(this->data));
-        }
         data->unshareable = markUnsharable;
     }
 
