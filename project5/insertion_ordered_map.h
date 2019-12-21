@@ -23,7 +23,10 @@ namespace {
     };
 
     class lookup_error : std::exception {
-
+        virtual const char* what() const throw()
+        {
+            return "Lookup error happened";
+        }
     };
 }
 
@@ -88,6 +91,8 @@ public:
         bool operator==(const iterator &other) const;
         bool operator!=(const iterator &other) const;
         V& operator*();
+
+
     };
 
     iterator begin() const noexcept;
