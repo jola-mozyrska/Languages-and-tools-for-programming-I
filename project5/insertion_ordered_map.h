@@ -5,19 +5,20 @@
 #include <unordered_map>
 #include <list>
 #include <iterator>
+#include <memory>
 
 namespace {
     template <class K, class V>
     class value_in_map {
-        const V value;
-        typename std::list<K>::iterator node_iterator;
-
     public:
         value_in_map() = default;
         value_in_map(V value, typename std::list<K>::iterator node_iterator) {
             this->value = value;
             this->node_iterator = node_iterator;
         }
+
+        const V value;
+        typename std::list<K>::iterator node_iterator;
     };
 
     class lookup_error : std::exception {
@@ -46,6 +47,8 @@ private:
         std::list<K> list_of_recent_keys;
     };
 
+    bool copy_data(std::shared_ptr<Data> &backup);
+
     std::shared_ptr<Data> data;
 
 public:
@@ -58,7 +61,15 @@ public:
 
     bool insert(K const &k, V const &v);
     void erase(K const &k);
+    void merge(insertion_ordered_map const &other);
 
+    V &at(K const &k);
+    V const &at(K const &k) const;
+    V &operator[](K const &k);
+    size_t size() const;
+    bool empty() const;
+    void clear();
+    bool contains(K const &k) const;
 
     class iterator{
         iterator();
@@ -113,10 +124,132 @@ insertion_ordered_map<K, V, Hash>::operator=(insertion_ordered_map<K, V, Hash> o
 
 //  iterators
 
+template<class K, class V, class Hash>
+bool insertion_ordered_map<K, V, Hash>::copy_data(std::shared_ptr<Data> &backup) {
+    if(!data.unique()) {
+        try {
+            backup = data;
+            data = std::make_shared(Data(*data));
+            return true;
+        }
+        catch(std::exception &e) {
+            data = backup;
+            throw e;
+        }
+    }
 
+    return false;
+}
 
+template<class K, class V, class Hash>
+bool insertion_ordered_map<K, V, Hash>::insert(K const &k, V const &v) {
+    std::shared_ptr<Data> backup;
+    bool copied = copy_data(backup);
+        
+    if(contains(k)) {
+        data->list_of_recent_keys.splice(data->list_of_recent_keys.end(), data->list_of_recent_keys, data->elements_map[k].node_iterator);
+        return false;
+    }
+    else {
+        try {
+            data->list_of_recent_keys.push_back(k);
+            data->elements_map[k] = value_in_map<K, V>(v, std::prev(data->list_of_recent_keys.end()));
+            return true;
+        }
+        catch(std::exception &e) {
+            if(copied)
+                data = backup;
+            data->elements_map.erase(k);
+            data->list_of_recent_keys.pop_back();
 
+            throw e;
+        }
+    }
+}
 
+template<class K, class V, class Hash>
+void insertion_ordered_map<K, V, Hash>::erase(K const &k) {
+    std::shared_ptr<Data> backup;
+    bool copied = copy_data(backup);
 
+    try {
+        if(!contains(k))
+            throw lookup_error();
+
+        data->list_of_recent_keys.erase(data->elements_map[k].node_iterator);
+        data->elements_map.erase(k);    
+    }
+    catch(std::exception &e) {
+        if(copied)
+            data = backup;
+        throw e;
+    }
+}
+
+template<class K, class V, class Hash>
+void insertion_ordered_map<K, V, Hash>::merge(insertion_ordered_map const &other) {
+    std::shared_ptr<Data> backup;
+    bool copied = copy_data(backup);
+    Data old_data{*data};
+
+    try {
+        for(K key : other.data->list_of_recent_keys) {
+            if(contains(key))
+                data->list_of_recent_keys.splice(data->list_of_recent_keys.end(), data->list_of_recent_keys, data->elements_map[key].node_iterator);
+            else {
+                data->list_of_recent_keys.push_back(key);
+                data->elements_map[key] = value_in_map<K, V>(other[key], std::prev(data->list_of_recent_keys.end()));
+            }
+        }
+    }
+    catch(std::exception &e) {
+        if(copied)
+            data = backup;
+        else
+            *data = old_data;
+        throw e;
+    }
+}
+
+template<class K, class V, class Hash>
+V &insertion_ordered_map<K, V, Hash>::at(K const &k) {
+    if(!contains(k))
+        throw lookup_error();
+
+    return *(data->elements_map[k].node_iterator);
+}
+
+template<class K, class V, class Hash>
+V const &insertion_ordered_map<K, V, Hash>::at(K const &k) const {
+    return at(k);
+}
+
+template<class K, class V, class Hash>
+V &insertion_ordered_map<K, V, Hash>::operator[](K const &k) {
+    if(!contains(k))
+        insert(k, V());
+
+    return at(k);
+}
+
+template<class K, class V, class Hash>
+size_t insertion_ordered_map<K, V, Hash>::size() const {
+    return data->list_of_recent_keys.size();
+}
+
+template<class K, class V, class Hash>
+bool insertion_ordered_map<K, V, Hash>::empty() const {
+    return size() == 0;
+}
+
+template<class K, class V, class Hash>
+void insertion_ordered_map<K, V, Hash>::clear() {
+    data = std::make_shared(Data());
+}
+
+template<class K, class V, class Hash>
+bool insertion_ordered_map<K, V, Hash>::contains(K const &k) const {
+    return data->elements_map.find(k) != data->elements_map.end();
+}
 
 #endif //INSERTION_ORDERED_MAP_H
