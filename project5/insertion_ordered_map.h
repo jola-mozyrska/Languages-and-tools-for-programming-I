@@ -72,6 +72,13 @@ private:
     std::shared_ptr<Data> data;
     bool copy_data(std::shared_ptr<Data> &backup);
 
+    void before_modify(bool markUnsharable) {
+        if (!data) data = std::make_shared<Data>();
+        if (!data.unique()) data = std::make_shared<Data>(*(this->data));
+
+        data->unshareable = markUnsharable;
+    }
+
 public:
     using iterator = typename std::list<pair_in_list>::const_iterator;
 
@@ -99,6 +106,15 @@ public:
     iterator end() const {
         return data == nullptr ? iterator() : data->list_of_recent_elements.end();
     }
+
+    void c() {
+        for(auto a : data->elements_map)
+            std::cout << (unsigned long long int)(a.first) << " | " << a.second->second << std::endl;
+        std::cout << "++++LIST++++\n";
+        for(auto a : data->list_of_recent_elements)
+            std::cout << (unsigned long long int)(&a.first) << " | " << a.second << std::endl;
+        std::cout << "-----------\n";
+    }
 };
 
 //  CONSTRUCTORS
@@ -110,7 +126,10 @@ insertion_ordered_map<K, V, Hash>::insertion_ordered_map() noexcept{
 
 template <class K, class V, class Hash>
 insertion_ordered_map<K, V, Hash>::insertion_ordered_map(insertion_ordered_map const &other) {
-     data = std::make_shared<Data>(*(other.data));
+    if (!other.data->unshareable)
+        data = other.data;
+    else
+        data = std::make_shared<Data>(*(other.data));
 }
 
 template <class K, class V, class Hash>
@@ -150,6 +169,7 @@ bool insertion_ordered_map<K, V, Hash>::insert(K const &k, V const &v) {
     std::shared_ptr<Data> backup;
     bool copied = copy_data(backup);
 
+    before_modify(false);
         
     if(contains(k)) {
         data->list_of_recent_elements.splice(data->list_of_recent_elements.end(), data->list_of_recent_elements, data->elements_map[&k]);
@@ -177,6 +197,8 @@ void insertion_ordered_map<K, V, Hash>::erase(K const &k) {
     std::shared_ptr<Data> backup;
     bool copied = copy_data(backup);
 
+    before_modify(false);
+
     try {
         if(!contains(k))
             throw lookup_error();
@@ -198,6 +220,8 @@ void insertion_ordered_map<K, V, Hash>::merge(insertion_ordered_map const &other
     Data old_data{*data};
 
     try {
+        if(other.data == data)
+            return;
         for(pair_in_list &pair : other.data->list_of_recent_elements) {
             const K &key = pair.first;
             if(contains(key))
@@ -221,6 +245,8 @@ template<class K, class V, class Hash>
 V &insertion_ordered_map<K, V, Hash>::at(K const &k) {
     if(!contains(k))
         throw lookup_error();
+
+    before_modify(true);
 
     return (data->elements_map[&k])->second;
 }
@@ -253,6 +279,7 @@ bool insertion_ordered_map<K, V, Hash>::empty() const {
 
 template<class K, class V, class Hash>
 void insertion_ordered_map<K, V, Hash>::clear() {
+    before_modify(false);
     data = std::make_shared<Data>(Data());
 }
 
