@@ -23,7 +23,7 @@ private:
     class hash_ptr {
         Hash hash;
 
-        std::size_t operator[](const K* &k) const noexcept {
+        std::size_t operator()(const K* &k) const noexcept {
             return hash(*k);
         }
     };
