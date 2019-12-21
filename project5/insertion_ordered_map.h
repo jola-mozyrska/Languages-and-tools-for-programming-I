@@ -106,6 +106,12 @@ public:
     iterator end() const {
         return data == nullptr ? iterator() : data->list_of_recent_elements.end();
     }
+
+    void c() {
+        // for(auto a : data->elements_map)
+        //     std::cout << *(a.first) << " " << a.second->second << std::endl;
+        // std::cout << "asdasd\n";
+    }
 };
 
 //  CONSTRUCTORS
@@ -166,8 +172,9 @@ bool insertion_ordered_map<K, V, Hash>::insert(K const &k, V const &v) {
     }
     else {
         try {
+            // std::cout << "w " << k << " | " << v << std::endl;
             data->list_of_recent_elements.push_back(std::make_pair(k, v));
-            data->elements_map[&k] = std::prev(data->list_of_recent_elements.end());
+            data->elements_map[&(data->list_of_recent_elements.back().first)] = std::prev(data->list_of_recent_elements.end());
             return true;
         }
         catch(std::exception &e) {
@@ -208,6 +215,7 @@ void insertion_ordered_map<K, V, Hash>::merge(insertion_ordered_map const &other
 
     try {
         for(pair_in_list &pair : other.data->list_of_recent_elements) {
+            // std::cout << pair.first << " | " << pair.second << std::endl;
             const K &key = pair.first;
             if(contains(key))
                 data->list_of_recent_elements.splice(data->list_of_recent_elements.end(), data->list_of_recent_elements, data->elements_map[&key]);
@@ -215,6 +223,7 @@ void insertion_ordered_map<K, V, Hash>::merge(insertion_ordered_map const &other
                 data->list_of_recent_elements.push_back(std::make_pair(key, other.at(key)));
                 data->elements_map[&key] = std::prev(data->list_of_recent_elements.end());
             }
+            // std::cout << "A\n";
         }
     }
     catch(std::exception &e) {
@@ -236,7 +245,10 @@ V &insertion_ordered_map<K, V, Hash>::at(K const &k) {
 
 template<class K, class V, class Hash>
 V const &insertion_ordered_map<K, V, Hash>::at(K const &k) const {
-    return at(k);
+    if(!contains(k))
+        throw lookup_error();
+
+    return (data->elements_map[&k])->second;
 }
 
 template<class K, class V, class Hash>
