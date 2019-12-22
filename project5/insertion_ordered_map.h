@@ -269,12 +269,15 @@ V &insertion_ordered_map<K, V, Hash>::operator[](K const &k) {
 
 template<class K, class V, class Hash>
 size_t insertion_ordered_map<K, V, Hash>::size() const {
-    return data->list_of_recent_elements.size();
+    if(!data)
+        return 0;
+    else
+        return data->list_of_recent_elements.size();
 }
 
 template<class K, class V, class Hash>
 bool insertion_ordered_map<K, V, Hash>::empty() const {
-    return size() == 0;
+    return data == nullptr || data->elements_map.empty();
 }
 
 template<class K, class V, class Hash>
